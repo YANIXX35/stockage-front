@@ -1,0 +1,34 @@
+<div class="app-layout">
+  <app-sidebar></app-sidebar>
+  <div class="app-main">
+    <app-topbar title="Paramètres"></app-topbar>
+    <div class="page-content">
+      @if (auth.currentUser) {
+        <div class="settings-card">
+          <h3>Mon Profil</h3>
+          <div class="profile-row"><label>Prénom</label><span>{{ auth.currentUser.prenom }}</span></div>
+          <div class="profile-row"><label>Nom</label><span>{{ auth.currentUser.nom }}</span></div>
+          <div class="profile-row"><label>Email</label><span>{{ auth.currentUser.email }}</span></div>
+          <div class="profile-row"><label>Membre depuis</label><span>{{ auth.currentUser.created_at | date:'dd/MM/yyyy' }}</span></div>
+        </div>
+        <div class="settings-card">
+          <h3>Mon Stockage</h3>
+          <div class="quota-detail">
+            <div class="quota-numbers">
+              <span>{{ auth.formatBytes(auth.currentUser.quota_used) }} utilisés</span>
+              <span>{{ auth.formatBytes(auth.currentUser.quota_max) }} total</span>
+            </div>
+            <div class="quota-bar-big">
+              <div [style.width.%]="auth.quotaPercent()" [class.warn]="auth.quotaPercent() > 80"></div>
+            </div>
+            <p>{{ auth.quotaPercent() }}% de ton espace utilisé</p>
+          </div>
+        </div>
+        <div class="settings-card danger-zone">
+          <h3>Déconnexion</h3>
+          <button class="btn-logout" (click)="auth.logout()">🚪 Se déconnecter</button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

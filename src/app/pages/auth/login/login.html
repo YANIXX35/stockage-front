@@ -1,0 +1,24 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
+      StorageApp
+    </div>
+    <h2>Connexion</h2>
+    @if (error) { <div class="auth-error">{{ error }}</div> }
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" placeholder="mon@email.com">
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" formControlName="password" placeholder="••••••">
+      </div>
+      <button type="submit" class="btn-submit" [disabled]="form.invalid || loading">
+        {{ loading ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+    <p class="auth-switch">Pas de compte ? <a routerLink="/register">Créer un compte</a></p>
+  </div>
+</div>

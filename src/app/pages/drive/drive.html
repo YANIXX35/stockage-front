@@ -1,0 +1,96 @@
+<div class="app-layout">
+  <app-sidebar></app-sidebar>
+  <div class="app-main">
+    <app-topbar title="Mon Drive"></app-topbar>
+    <div class="page-content">
+
+      <!-- BARRE D'ACTIONS -->
+      <div class="drive-toolbar">
+        <label class="btn-upload">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Uploader
+          <input type="file" multiple (change)="onFilesSelected($event)" style="display:none">
+        </label>
+        <button class="btn-action" (click)="showNewFolder = !showNewFolder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          Nouveau dossier
+        </button>
+      </div>
+
+      <!-- NOUVEAU DOSSIER -->
+      @if (showNewFolder) {
+        <div class="new-folder-bar">
+          <input type="text" [(ngModel)]="newFolderName" placeholder="Nom du dossier" (keyup.enter)="createFolder()">
+          <button (click)="createFolder()" class="btn-confirm">Créer</button>
+          <button (click)="showNewFolder = false" class="btn-cancel">Annuler</button>
+        </div>
+      }
+
+      <!-- DOSSIERS -->
+      @if (folders.length > 0) {
+        <div class="section-title">Dossiers</div>
+        <div class="folders-grid">
+          @for (f of folders; track f.id) {
+            @if (renameTarget?.id === f.id) {
+              <div class="folder-card renaming">
+                <input type="text" [(ngModel)]="renameValue" (keyup.enter)="confirmRename()" autofocus>
+                <button (click)="confirmRename()">✓</button>
+                <button (click)="renameTarget = null">✗</button>
+              </div>
+            } @else {
+              <div class="folder-card" (dblclick)="openFolder(f.id)">
+                <span class="folder-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span>
+                <span class="folder-name">{{ f.nom }}</span>
+                <div class="folder-actions">
+                  <button (click)="startRename(f)" title="Renommer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button (click)="deleteFolder(f.id)" title="Supprimer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- FICHIERS -->
+      <div class="section-title">Fichiers</div>
+      @if (loading) { <div class="loading">Chargement...</div> }
+      @if (!loading && files.length === 0 && folders.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="28" height="28"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <p>Ce dossier est vide. Uploadez des fichiers !</p>
+        </div>
+      }
+      <div class="files-list">
+        @for (f of files; track f.id) {
+          <div class="file-row">
+            <span class="file-icon">{{ storage.getFileIcon(f.type_mime) }}</span>
+            <span class="file-name">{{ f.nom_original }}</span>
+            <span class="file-size">{{ storage.formatBytes(f.taille) }}</span>
+            <span class="file-date">{{ f.created_at | date:'dd/MM/yyyy' }}</span>
+            <div class="file-actions">
+              <button (click)="download(f)" title="Télécharger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+              <button (click)="shareFile(f.id)" title="Partager"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+              <button (click)="deleteFile(f.id)" title="Supprimer" class="btn-danger"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- MODAL PARTAGE -->
+      @if (shareVisible) {
+        <div class="share-modal-overlay" (click)="shareVisible = false">
+          <div class="share-modal" (click)="$event.stopPropagation()">
+            <h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Lien de partage</h3>
+            <div class="share-link-box">
+              <input type="text" [value]="shareToken" readonly>
+              <button (click)="copyShare()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier</button>
+            </div>
+            <button class="btn-close" (click)="shareVisible = false">Fermer</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

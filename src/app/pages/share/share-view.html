@@ -1,0 +1,22 @@
+<div class="share-page">
+  <div class="share-card">
+    <div class="share-logo">
+      <span class="share-logo-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
+      StorageApp
+    </div>
+    @if (error) {
+      <div class="share-error">{{ error }}</div>
+    } @else if (info) {
+      <div class="share-file-icon">{{ storage.getFileIcon(info.type_mime) }}</div>
+      <h2>{{ info.nom }}</h2>
+      <p>{{ storage.formatBytes(info.taille) }}</p>
+      <button class="btn-download" (click)="download()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger le fichier
+      </button>
+    } @else {
+      <div class="share-loading">Chargement...</div>
+    }
+    <a routerLink="/" class="back-link">← Retour à l'accueil</a>
+  </div>
+</div>

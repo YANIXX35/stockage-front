@@ -1,0 +1,9 @@
+<header class="topbar">
+  <h1 class="topbar-title">{{ title }}</h1>
+  <div class="topbar-user">
+    @if (auth.currentUser) {
+      <div class="user-avatar">{{ auth.currentUser.prenom[0] }}{{ auth.currentUser.nom[0] }}</div>
+      <span class="user-name">{{ auth.currentUser.prenom }} {{ auth.currentUser.nom }}</span>
+    }
+  </div>
+</header>

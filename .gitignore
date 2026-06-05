@@ -1,0 +1,32 @@
+# Dépendances
+node_modules/
+.pnp
+.pnp.js
+
+# Build Angular
+dist/
+.angular/
+out-tsc/
+
+# Variables d'environnement
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
