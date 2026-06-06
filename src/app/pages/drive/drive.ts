@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
-import { timeout } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-drive', standalone: false, templateUrl: './drive.html', styleUrl: './drive.scss' })
 export class Drive implements OnInit, OnDestroy {
@@ -54,11 +54,11 @@ export class Drive implements OnInit, OnDestroy {
   load(): void {
     this.loading = true;
     this.loadError = false;
-    this.storage.getFiles(this.currentFolderId).pipe(timeout(20000)).subscribe({
+    this.storage.getFiles(this.currentFolderId).pipe(timeout(60000)).subscribe({
       next: f => { this.files = f; this.loading = false; },
       error: () => { this.loading = false; this.loadError = true; }
     });
-    this.storage.getFolders(this.currentFolderId).pipe(timeout(20000)).subscribe({
+    this.storage.getFolders(this.currentFolderId).pipe(timeout(60000)).subscribe({
       next: f => this.folders = f,
       error: () => {}
     });

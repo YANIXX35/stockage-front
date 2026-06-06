@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { StorageService, FileItem } from '../../services/storage.service';
-import { timeout } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-dashboard', standalone: false, templateUrl: './dashboard.html', styleUrl: './dashboard.scss' })
 export class Dashboard implements OnInit {
@@ -19,11 +19,11 @@ export class Dashboard implements OnInit {
     this.loading = true;
     this.loadError = false;
     this.auth.loadMe().subscribe();
-    this.storage.getFiles().pipe(timeout(20000)).subscribe({
+    this.storage.getFiles().pipe(timeout(60000)).subscribe({
       next: f => { this.recentFiles = f.slice(-6).reverse(); this.loading = false; },
       error: () => { this.loading = false; this.loadError = true; }
     });
-    this.storage.getFolders().pipe(timeout(20000)).subscribe({
+    this.storage.getFolders().pipe(timeout(60000)).subscribe({
       next: f => this.totalFolders = f.length,
       error: () => {}
     });

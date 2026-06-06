@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { StorageService, FileItem } from '../../services/storage.service';
-import { timeout } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-gallery', standalone: false, templateUrl: './gallery.html', styleUrl: './gallery.scss' })
 export class Gallery implements OnInit {
@@ -16,7 +16,7 @@ export class Gallery implements OnInit {
   load(): void {
     this.loading = true;
     this.loadError = false;
-    this.storage.getFiles().pipe(timeout(20000)).subscribe({
+    this.storage.getFiles().pipe(timeout(60000)).subscribe({
       next: f => { this.allFiles = f; this.loading = false; },
       error: () => { this.loading = false; this.loadError = true; }
     });

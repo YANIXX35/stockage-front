@@ -10,7 +10,7 @@
         <button [class.active]="filter === 'audio'" (click)="filter = 'audio'">Audio</button>
         <button [class.active]="filter === 'doc'" (click)="filter = 'doc'">Documents</button>
       </div>
-      @if (loading) { <div class="loading">Connexion au serveur...</div> }
+      @if (loading) { <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div> }
       @if (loadError) {
         <div class="load-error">
           <p>Le serveur est injoignable.</p>

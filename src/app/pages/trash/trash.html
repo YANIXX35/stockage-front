@@ -3,7 +3,7 @@
   <div class="app-main">
     <app-topbar title="Corbeille"></app-topbar>
     <div class="page-content">
-      @if (loading) { <div class="loading">Connexion au serveur...</div> }
+      @if (loading) { <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div> }
       @if (loadError) {
         <div class="load-error">
           <p>Le serveur est injoignable.</p>

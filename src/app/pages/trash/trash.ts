@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { StorageService, FileItem } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
-import { timeout } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-trash', standalone: false, templateUrl: './trash.html', styleUrl: './trash.scss' })
 export class Trash implements OnInit {
@@ -16,7 +16,7 @@ export class Trash implements OnInit {
   load(): void {
     this.loading = true;
     this.loadError = false;
-    this.storage.getTrash().pipe(timeout(20000)).subscribe({
+    this.storage.getTrash().pipe(timeout(60000)).subscribe({
       next: f => { this.files = f; this.loading = false; },
       error: () => { this.loading = false; this.loadError = true; }
     });
