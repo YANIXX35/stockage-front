@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
+import { timeout } from 'rxjs';
 
 @Component({ selector: 'app-drive', standalone: false, templateUrl: './drive.html', styleUrl: './drive.scss' })
 export class Drive implements OnInit, OnDestroy {
@@ -16,6 +17,7 @@ export class Drive implements OnInit, OnDestroy {
 
   // États de chargement
   loading = true;
+  loadError = false;
   uploading = false;
   uploadCount = 0;
 
@@ -51,11 +53,12 @@ export class Drive implements OnInit, OnDestroy {
 
   load(): void {
     this.loading = true;
-    this.storage.getFiles(this.currentFolderId).subscribe({
+    this.loadError = false;
+    this.storage.getFiles(this.currentFolderId).pipe(timeout(20000)).subscribe({
       next: f => { this.files = f; this.loading = false; },
-      error: () => { this.loading = false; this.showToast('Impossible de charger les fichiers', 'error'); }
+      error: () => { this.loading = false; this.loadError = true; }
     });
-    this.storage.getFolders(this.currentFolderId).subscribe({
+    this.storage.getFolders(this.currentFolderId).pipe(timeout(20000)).subscribe({
       next: f => this.folders = f,
       error: () => {}
     });

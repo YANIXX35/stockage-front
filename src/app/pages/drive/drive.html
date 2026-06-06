@@ -109,7 +109,12 @@
       }
 
       @if (loading) {
-        <div class="loading">Chargement...</div>
+        <div class="loading">Connexion au serveur...</div>
+      } @else if (loadError) {
+        <div class="load-error">
+          <p>Le serveur est injoignable.</p>
+          <button class="btn-retry" (click)="load()">Réessayer</button>
+        </div>
       } @else if (files.length === 0 && folders.length === 0) {
         <div class="empty-state">
           <div class="empty-icon">

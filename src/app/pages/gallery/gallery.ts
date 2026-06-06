@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { StorageService, FileItem } from '../../services/storage.service';
+import { timeout } from 'rxjs';
 
 @Component({ selector: 'app-gallery', standalone: false, templateUrl: './gallery.html', styleUrl: './gallery.scss' })
 export class Gallery implements OnInit {
@@ -8,9 +9,17 @@ export class Gallery implements OnInit {
   filter: 'all' | 'image' | 'video' | 'audio' | 'doc' = 'all';
   preview: FileItem | null = null;
   loading = true;
+  loadError = false;
 
-  ngOnInit(): void {
-    this.storage.getFiles().subscribe({ next: f => { this.allFiles = f; this.loading = false; }, error: () => this.loading = false });
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
+    this.loading = true;
+    this.loadError = false;
+    this.storage.getFiles().pipe(timeout(20000)).subscribe({
+      next: f => { this.allFiles = f; this.loading = false; },
+      error: () => { this.loading = false; this.loadError = true; }
+    });
   }
 
   get filtered(): FileItem[] {

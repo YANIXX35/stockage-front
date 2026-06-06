@@ -1048,6 +1048,30 @@ input, button { font-family: inherit; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 3rem;
+  text-align: center;
+
+  p { color: var(--text-secondary); font-size: 0.875rem; }
+
+  .btn-retry {
+    padding: 9px 22px;
+    background: var(--accent-subtle);
+    border: 1px solid rgba(108, 99, 255, 0.25);
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    &:hover { background: var(--accent-dim); box-shadow: var(--shadow-accent); }
+  }
+}
+
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
