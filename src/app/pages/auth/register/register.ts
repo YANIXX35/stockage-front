@@ -22,8 +22,14 @@ export class Register {
     if (this.form.invalid) return;
     this.loading = true;
     this.error = '';
+    const { email, password } = this.form.value;
     this.auth.register(this.form.value as any).subscribe({
-      next: () => this.router.navigate(['/login']),
+      next: () => {
+        this.auth.login(email!, password!).subscribe({
+          next: () => this.router.navigate(['/dashboard']),
+          error: () => this.router.navigate(['/login/login'])
+        });
+      },
       error: (e) => { this.error = e.error?.detail || 'Erreur d\'inscription'; this.loading = false; }
     });
   }
