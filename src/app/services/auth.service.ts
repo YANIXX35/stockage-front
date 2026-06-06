@@ -63,7 +63,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('token');
     this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login/login']);
   }
 
   quotaPercent(): number {
