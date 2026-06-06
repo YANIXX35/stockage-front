@@ -857,6 +857,174 @@ input, button { font-family: inherit; }
   .share-loading { color: var(--text-muted); }
 }
 
+/* ── TOAST NOTIFICATIONS ─────────────────────────────────── */
+@keyframes toast-in {
+  from { transform: translateX(calc(100% + 1.5rem)); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: toast-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  max-width: 340px;
+
+  &.toast-success {
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    color: #34d399;
+    svg { color: #34d399; flex-shrink: 0; }
+  }
+
+  &.toast-error {
+    background: var(--danger-subtle);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #f87171;
+    svg { color: #f87171; flex-shrink: 0; }
+  }
+}
+
+/* ── CONFIRM DIALOG ──────────────────────────────────────── */
+@keyframes dialog-in {
+  from { transform: scale(0.94) translateY(8px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.confirm-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  width: 90%;
+  max-width: 380px;
+  box-shadow: var(--shadow-lg);
+  animation: dialog-in 0.22s ease forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .confirm-icon {
+    width: 46px;
+    height: 46px;
+    background: var(--danger-subtle);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--danger);
+  }
+
+  .confirm-content {
+    .confirm-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .confirm-label { font-size: 0.845rem; color: var(--text-secondary); word-break: break-all; }
+    .confirm-warning { font-size: 0.78rem; color: var(--warn); margin-top: 6px; }
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+
+    .btn-cancel {
+      padding: 9px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 38px;
+      transition: background 0.15s, color 0.15s;
+      &:hover { background: var(--surface-3); color: var(--text-primary); }
+    }
+
+    .btn-delete {
+      padding: 9px 18px;
+      background: var(--danger);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 38px;
+      transition: background 0.15s, box-shadow 0.15s;
+      &:hover { background: #c0392b; box-shadow: 0 4px 14px rgba(231,76,60,0.35); }
+    }
+  }
+}
+
+/* ── UPLOAD SPINNER ──────────────────────────────────────── */
+@keyframes spin-upload {
+  to { transform: rotate(360deg); }
+}
+
+.upload-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin-upload 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.btn-upload.uploading {
+  opacity: 0.75;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── COUNT BADGE ─────────────────────────────────────────── */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  letter-spacing: 0;
+  text-transform: none;
+  vertical-align: middle;
+}
+
+/* ── RENAME FOLDER BTNS ──────────────────────────────────── */
+.rename-btns {
+  display: flex;
+  gap: 4px;
+  .btn-confirm { padding: 3px 8px; background: var(--accent); border: none; border-radius: 4px; color: #fff; font-size: 0.78rem; font-weight: 600; cursor: pointer; &:hover { background: var(--accent-hover); } }
+  .btn-cancel { padding: 3px 7px; background: var(--surface-3); border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 0.78rem; cursor: pointer; &:hover { color: var(--text-primary); } }
+}
+
 /* ── UTILITAIRES ─────────────────────────────────────────── */
 .loading {
   display: flex;
