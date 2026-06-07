@@ -1235,3 +1235,165 @@ input, button { font-family: inherit; }
   p { font-size: 0.875rem; color: var(--text-secondary); }
   a { color: var(--accent); font-weight: 500; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Hamburger button (caché sur desktop) ─────────────── */
+.topbar-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  &:hover { background: var(--surface-2); color: var(--text-primary); }
+}
+
+/* ── Sidebar close button (caché sur desktop) ─────────── */
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  &:hover { color: var(--text-primary); }
+}
+
+/* ── Sidebar backdrop (caché sur desktop) ─────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  &.open { display: block; }
+}
+
+/* ══ TABLETTE (768px – 1024px) ═══════════════════════════ */
+@media (max-width: 1024px) {
+
+  .sidebar { width: 210px; padding: 16px 10px; }
+
+  .page-content { padding: 1.5rem; }
+
+  .admin-content { padding: 1.25rem 1.5rem; }
+
+  .table-header,
+  .table-row { grid-template-columns: 2fr 2fr 1.5fr 80px 90px 100px; gap: 0.8rem; padding: 11px 14px; }
+
+  .admin-nav {
+    padding: 0 1.25rem;
+    .admin-nav-user { display: none; }
+  }
+}
+
+/* ══ MOBILE (< 768px) ════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* Topbar */
+  .topbar {
+    padding: 0 1rem;
+    height: 56px;
+    .topbar-menu-btn { display: flex; }
+    .topbar-title { font-size: 1rem; }
+    .user-name { display: none; }
+  }
+
+  /* Sidebar : drawer off-canvas */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    z-index: 200;
+    width: 270px;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    &.open {
+      transform: translateX(0);
+      box-shadow: 4px 0 30px rgba(0,0,0,0.4);
+    }
+  }
+
+  .sidebar-close-btn { display: flex; }
+
+  .sidebar-logo { margin-bottom: 20px; }
+
+  /* Page content */
+  .page-content { padding: 1rem; }
+
+  /* Dashboard */
+  .welcome-banner { padding: 1rem 1.1rem; margin-bottom: 1.25rem; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .stat-card { padding: 0.9rem; }
+  .files-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+  .file-card .file-thumb { height: 80px; }
+
+  /* Drive toolbar */
+  .drive-toolbar { flex-wrap: wrap; }
+
+  /* ── Admin : full-width layout ─────────────── */
+  .admin-nav {
+    padding: 0 1rem;
+    height: 52px;
+    .admin-nav-brand span { display: none; }
+    .admin-nav-title { font-size: 0.9rem; }
+    .admin-nav-user { display: none; }
+    .admin-nav-back span { display: none; }
+    .admin-nav-back { padding: 6px 10px; font-size: 0; svg { margin: 0; } }
+  }
+
+  .admin-content { padding: 1rem; }
+
+  .admin-stats { gap: 8px; }
+  .admin-stat { padding: 0.75rem 1rem; min-width: 0; flex: 1; }
+  .admin-stat strong { font-size: 1.25rem; }
+
+  .admin-toolbar {
+    .admin-search { max-width: 100%; }
+    .btn-add-user { width: 100%; justify-content: center; }
+  }
+
+  /* Table admin → cards sur mobile */
+  .table-header { display: none; }
+
+  .table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+    background: var(--surface);
+
+    .user-cell { order: 1; }
+    .cell-email { order: 2; font-size: 0.8rem; }
+    .quota-cell { order: 3; }
+    .status-badge { order: 4; width: fit-content; }
+    .cell-date { order: 5; }
+    .row-actions { order: 6; justify-content: flex-end; }
+
+    &.row-inactive { opacity: 0.65; }
+  }
+
+  .users-table {
+    background: none;
+    border: none;
+    .table-row { border-top: none; }
+  }
+
+  /* Admin modales */
+  .modal-dialog { margin: 0.75rem; }
+}
