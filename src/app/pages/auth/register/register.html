@@ -30,6 +30,9 @@
         <button type="submit" class="btn-submit" [disabled]="form.invalid || loading">
           {{ loading ? 'Envoi du code...' : 'Envoyer le code de vérification' }}
         </button>
+        @if (slowServer) {
+          <p class="slow-server-hint">Le serveur démarre, veuillez patienter (~30s)…</p>
+        }
       </form>
       <p class="auth-switch">Déjà inscrit ? <a routerLink="/login/login">Se connecter</a></p>
     }

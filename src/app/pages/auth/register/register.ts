@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -8,6 +8,7 @@ export class Register {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   form = this.fb.group({
     prenom: ['', Validators.required],
@@ -20,23 +21,37 @@ export class Register {
 
   step: 'form' | 'otp' = 'form';
   loading = false;
+  slowServer = false;
   error = '';
   resendCooldown = 0;
   private cooldownTimer: any;
+  private slowTimer: any;
 
   get email(): string { return this.form.get('email')?.value ?? ''; }
 
   sendOtp(): void {
     if (this.form.invalid) return;
     this.loading = true;
+    this.slowServer = false;
     this.error = '';
+    // Avertissement si le serveur met du temps à répondre (cold start Render ~30s)
+    this.slowTimer = setTimeout(() => { this.slowServer = true; this.cdr.detectChanges(); }, 8000);
     this.auth.sendOtp(this.email).subscribe({
       next: () => {
+        clearTimeout(this.slowTimer);
         this.step = 'otp';
         this.loading = false;
+        this.slowServer = false;
         this.startCooldown();
+        this.cdr.detectChanges();
       },
-      error: (e) => { this.error = e.error?.detail || "Erreur d'envoi du code"; this.loading = false; }
+      error: (e) => {
+        clearTimeout(this.slowTimer);
+        this.error = e.error?.detail || "Erreur d'envoi du code";
+        this.loading = false;
+        this.slowServer = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
@@ -44,8 +59,8 @@ export class Register {
     if (this.resendCooldown > 0) return;
     this.error = '';
     this.auth.sendOtp(this.email).subscribe({
-      next: () => this.startCooldown(),
-      error: (e) => { this.error = e.error?.detail || "Erreur d'envoi"; }
+      next: () => { this.startCooldown(); this.cdr.detectChanges(); },
+      error: (e) => { this.error = e.error?.detail || "Erreur d'envoi"; this.cdr.detectChanges(); }
     });
   }
 
