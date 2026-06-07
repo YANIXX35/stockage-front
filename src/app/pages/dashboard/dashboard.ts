@@ -24,9 +24,9 @@ export class Dashboard implements OnInit, OnDestroy {
   private loadThumbnails(files: FileItem[]): void {
     files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
-        this.storage.getBlobUrl(f.id).subscribe(url =>
-          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url))
-        );
+        this.storage.getBlobUrl(f.id).subscribe(url => {
+          if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
+        });
       }
     });
   }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { tap, map, retry, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -41,15 +41,17 @@ export class StorageService {
 
   getCachedTrash(): FileItem[] | null { return this._trashCache; }
 
-  getBlobUrl(fileId: number): Observable<string> {
+  getBlobUrl(fileId: number): Observable<string | null> {
     const cached = this._blobUrlCache.get(fileId);
     if (cached) return of(cached);
     return this.http.get(this.downloadUrl(fileId), { responseType: 'blob' }).pipe(
+      retry(1),
       map(blob => {
         const url = URL.createObjectURL(blob);
         this._blobUrlCache.set(fileId, url);
         return url;
-      })
+      }),
+      catchError(() => of(null))
     );
   }
 
