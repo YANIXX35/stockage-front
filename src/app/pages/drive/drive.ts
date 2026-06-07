@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
@@ -8,8 +9,10 @@ import { timeout } from 'rxjs/operators';
 export class Drive implements OnInit, OnDestroy {
   storage = inject(StorageService);
   auth = inject(AuthService);
+  private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  blobUrls = new Map<number, SafeUrl>();
 
   files: FileItem[] = [];
   folders: FolderItem[] = [];
@@ -54,6 +57,16 @@ export class Drive implements OnInit, OnDestroy {
     clearTimeout(this.slowTimer);
   }
 
+  private loadThumbnails(files: FileItem[]): void {
+    files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
+      if (!this.blobUrls.has(f.id)) {
+        this.storage.getBlobUrl(f.id).subscribe(url =>
+          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url))
+        );
+      }
+    });
+  }
+
   load(): void {
     const cachedFiles = this.storage.getCachedFiles(this.currentFolderId);
     const cachedFolders = this.storage.getCachedFolders(this.currentFolderId);
@@ -65,6 +78,7 @@ export class Drive implements OnInit, OnDestroy {
       this.loadError = false;
       this.slowLoading = false;
       clearTimeout(this.slowTimer);
+      this.loadThumbnails(cachedFiles!);
     } else {
       this.loading = true;
       this.loadError = false;
@@ -75,7 +89,7 @@ export class Drive implements OnInit, OnDestroy {
     if (cachedFolders !== null) this.folders = cachedFolders;
 
     this.storage.getFiles(this.currentFolderId).pipe(timeout(60000)).subscribe({
-      next: f => { this.files = f; this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); },
+      next: f => { this.files = f; this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); this.loadThumbnails(f); },
       error: () => { if (!hadCache) { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); } }
     });
     this.storage.getFolders(this.currentFolderId).pipe(timeout(60000)).subscribe({

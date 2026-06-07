@@ -128,7 +128,17 @@
         <div class="files-list">
           @for (f of files; track f.id) {
             <div class="file-row">
-              <span class="file-icon">{{ storage.getFileIcon(f.type_mime) }}</span>
+              <span class="file-icon">
+                @if ((storage.isImage(f.type_mime) || storage.isVideo(f.type_mime)) && blobUrls.has(f.id)) {
+                  @if (storage.isImage(f.type_mime)) {
+                    <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original" class="row-thumb">
+                  } @else {
+                    <video [src]="blobUrls.get(f.id)" preload="metadata" muted playsinline class="row-thumb"></video>
+                  }
+                } @else {
+                  {{ storage.getFileIcon(f.type_mime) }}
+                }
+              </span>
               <span class="file-name">{{ f.nom_original }}</span>
               <span class="file-size">{{ storage.formatBytes(f.taille) }}</span>
               <span class="file-date">{{ f.created_at | date:'dd/MM/yyyy' }}</span>

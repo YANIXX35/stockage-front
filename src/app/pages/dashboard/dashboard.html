@@ -61,7 +61,17 @@
       <div class="files-grid">
         @for (f of recentFiles; track f.id) {
           <div class="file-card">
-            <div class="file-icon">{{ storage.getFileIcon(f.type_mime) }}</div>
+            @if ((storage.isImage(f.type_mime) || storage.isVideo(f.type_mime)) && blobUrls.has(f.id)) {
+              <div class="file-thumb">
+                @if (storage.isImage(f.type_mime)) {
+                  <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original">
+                } @else {
+                  <video [src]="blobUrls.get(f.id)" preload="metadata" muted playsinline></video>
+                }
+              </div>
+            } @else {
+              <div class="file-icon">{{ storage.getFileIcon(f.type_mime) }}</div>
+            }
             <div class="file-name">{{ f.nom_original }}</div>
             <div class="file-size">{{ storage.formatBytes(f.taille) }}</div>
           </div>
