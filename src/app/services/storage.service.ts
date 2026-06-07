@@ -122,6 +122,14 @@ export class StorageService {
     return this.http.get<any[]>(`${this.api}/users`);
   }
 
+  createUser(data: { email: string; nom: string; prenom: string; password: string; quota_max: number }): Observable<any> {
+    return this.http.post<any>(`${this.api}/users`, data);
+  }
+
+  updateUser(userId: number, data: { nom?: string; prenom?: string; email?: string; quota_max?: number; is_admin?: boolean }): Observable<any> {
+    return this.http.put<any>(`${this.api}/users/${userId}`, data);
+  }
+
   updateQuota(userId: number, quotaMax: number): Observable<unknown> {
     return this.http.put(`${this.api}/users/${userId}/quota`, { quota_max: quotaMax });
   }
