@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of, from, forkJoin } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, from, forkJoin, timer } from 'rxjs';
 import { tap, map, retry, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -30,6 +30,7 @@ export class StorageService {
   private _foldersCache = new Map<string, FolderItem[]>();
   private _trashCache: FileItem[] | null = null;
   private _blobUrlCache = new Map<number, string>();
+  private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
 
   getCachedFiles(folderId?: number): FileItem[] | null {
@@ -47,16 +48,27 @@ export class StorageService {
   getCachedTrash(): FileItem[] | null { return this._trashCache; }
 
   getBlobUrl(fileId: number): Observable<string | null> {
-    const cached = this._blobUrlCache.get(fileId);
-    if (cached) return of(cached);
+    if (this._blobUrlCache.has(fileId)) return of(this._blobUrlCache.get(fileId)!);
+    // Fichier déjà connu comme introuvable → pas de nouvelle requête
+    if (this._blobUrlFailed.has(fileId)) return of(null);
     return this.http.get(this.downloadUrl(fileId), { responseType: 'blob' }).pipe(
-      retry(1),
+      retry({
+        count: 1,
+        delay: (err) => {
+          // Ne jamais réessayer un 404 — le fichier n'existe pas
+          if (err instanceof HttpErrorResponse && err.status === 404) throw err;
+          return timer(1000);
+        }
+      }),
       map(blob => {
         const url = URL.createObjectURL(blob);
         this._blobUrlCache.set(fileId, url);
         return url;
       }),
-      catchError(() => of(null))
+      catchError(() => {
+        this._blobUrlFailed.add(fileId);
+        return of(null);
+      })
     );
   }
 
