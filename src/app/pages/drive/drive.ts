@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
@@ -7,6 +7,8 @@ import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-drive', standalone: false, templateUrl: './drive.html', styleUrl: './drive.scss' })
 export class Drive implements OnInit, OnDestroy {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   storage = inject(StorageService);
   auth = inject(AuthService);
   private sanitizer = inject(DomSanitizer);
@@ -133,18 +135,26 @@ export class Drive implements OnInit, OnDestroy {
 
   // ── FICHIERS ──────────────────────────────────────────────
 
+  triggerUpload(): void {
+    this.fileInput.nativeElement.click();
+  }
+
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
     const files = Array.from(input.files);
+    input.value = '';
     this.uploading = true;
     this.uploadCount = files.length;
     this.storage.uploadFiles(files, this.currentFolderId).subscribe({
-      next: () => {
+      next: (newFiles) => {
         this.uploading = false;
         this.uploadCount = 0;
+        // Ajout immédiat dans la liste — pas de reload nécessaire
+        this.files = [...this.files, ...newFiles];
+        this.storage.invalidateFilesCache(this.currentFolderId);
+        this.loadThumbnails(newFiles);
         this.auth.loadMe().subscribe();
-        this.load();
         this.showToast(`${files.length} fichier${files.length > 1 ? 's uploadés' : ' uploadé'} avec succès`, 'success');
       },
       error: (err) => {
@@ -154,7 +164,6 @@ export class Drive implements OnInit, OnDestroy {
         this.showToast(detail, 'error');
       }
     });
-    input.value = '';
   }
 
   askDeleteFile(f: FileItem): void {

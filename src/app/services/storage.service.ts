@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { tap, map, retry, catchError } from 'rxjs/operators';
+import { Observable, of, from, forkJoin } from 'rxjs';
+import { tap, map, retry, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -30,9 +30,14 @@ export class StorageService {
   private _foldersCache = new Map<string, FolderItem[]>();
   private _trashCache: FileItem[] | null = null;
   private _blobUrlCache = new Map<number, string>();
+  private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
 
   getCachedFiles(folderId?: number): FileItem[] | null {
     return this._filesCache.get(folderId != null ? String(folderId) : 'root') ?? null;
+  }
+
+  invalidateFilesCache(folderId?: number): void {
+    this._filesCache.delete(folderId != null ? String(folderId) : 'root');
   }
 
   getCachedFolders(parentId?: number): FolderItem[] | null {
@@ -56,11 +61,61 @@ export class StorageService {
   }
 
   // ── FICHIERS ────────────────────────────────────────────
-  uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
+  private getCloudinaryConfig(): Observable<{ cloud_name: string; upload_preset: string }> {
+    if (this._cloudinaryConfig) return of(this._cloudinaryConfig);
+    return this.http.get<{ cloud_name: string; upload_preset: string }>(`${this.api}/files/cloudinary-config`).pipe(
+      tap(c => this._cloudinaryConfig = c)
+    );
+  }
+
+  private async uploadToCloudinary(
+    file: File,
+    config: { cloud_name: string; upload_preset: string }
+  ): Promise<{ secure_url: string; public_id: string }> {
     const fd = new FormData();
-    files.forEach(f => fd.append('files', f));
-    const url = folderId ? `${this.api}/files/upload?folder_id=${folderId}` : `${this.api}/files/upload`;
-    return this.http.post<FileItem[]>(url, fd);
+    fd.append('file', file);
+    fd.append('upload_preset', config.upload_preset);
+    fd.append('folder', 'storage');
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${config.cloud_name}/auto/upload`,
+      { method: 'POST', body: fd }
+    );
+    if (!res.ok) throw new Error('Cloudinary upload failed');
+    const data = await res.json();
+    return { secure_url: data.secure_url, public_id: data.public_id };
+  }
+
+  private registerFile(data: {
+    nom_original: string;
+    type_mime: string;
+    taille: number;
+    cloudinary_url: string;
+    public_id: string;
+    folder_id?: number;
+  }): Observable<FileItem> {
+    return this.http.post<FileItem>(`${this.api}/files/register`, data);
+  }
+
+  uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
+    return this.getCloudinaryConfig().pipe(
+      switchMap(config => {
+        const uploads = files.map(file =>
+          from(this.uploadToCloudinary(file, config)).pipe(
+            switchMap(({ secure_url, public_id }) =>
+              this.registerFile({
+                nom_original: file.name,
+                type_mime: file.type || 'application/octet-stream',
+                taille: file.size,
+                cloudinary_url: secure_url,
+                public_id,
+                folder_id: folderId,
+              })
+            )
+          )
+        );
+        return forkJoin(uploads);
+      })
+    );
   }
 
   getFiles(folderId?: number): Observable<FileItem[]> {
