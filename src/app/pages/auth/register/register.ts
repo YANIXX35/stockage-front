@@ -12,8 +12,8 @@ export class Register {
   form = this.fb.group({
     prenom: ['', Validators.required],
     nom: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    email: ['', Validators.required],
+    password: ['', Validators.required]
   });
   loading = false;
   error = '';

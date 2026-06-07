@@ -10,7 +10,7 @@ export class Login {
   private router = inject(Router);
 
   form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', Validators.required],
     password: ['', Validators.required]
   });
   loading = false;
