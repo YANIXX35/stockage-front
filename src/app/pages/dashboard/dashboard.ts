@@ -11,6 +11,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
 
   recentFiles: FileItem[] = [];
+  totalFiles = 0;
   totalFolders = 0;
   loading = true;
   loadError = false;
@@ -37,6 +38,7 @@ export class Dashboard implements OnInit, OnDestroy {
     const hadCache = cachedFiles !== null;
 
     if (hadCache) {
+      this.totalFiles = cachedFiles!.length;
       this.recentFiles = cachedFiles!.slice(-6).reverse();
       this.loading = false;
       this.loadError = false;
@@ -55,6 +57,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.auth.loadMe().subscribe();
     this.storage.getFiles().pipe(timeout(60000)).subscribe({
       next: f => {
+        this.totalFiles = f.length;
         this.recentFiles = f.slice(-6).reverse();
         this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer);
         this.loadThumbnails(this.recentFiles);

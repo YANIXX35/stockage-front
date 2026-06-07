@@ -4,5 +4,5 @@ import { RouterModule, Routes } from '@angular/router';
 import { ShareView } from './share-view';
 
 const routes: Routes = [{ path: ':token', component: ShareView }];
-@NgModule({ declarations: [ShareView], imports: [CommonModule, RouterModule.forChild(routes), RouterModule] })
+@NgModule({ declarations: [ShareView], imports: [CommonModule, RouterModule.forChild(routes)] })
 export class ShareModule {}

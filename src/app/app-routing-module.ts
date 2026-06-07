@@ -5,7 +5,6 @@ import { authGuard, adminGuard, guestGuard } from './guards/auth.guard';
 const routes: Routes = [
   { path: '', loadChildren: () => import('./pages/landing/landing-module').then(m => m.LandingModule) },
   { path: 'login', loadChildren: () => import('./pages/auth/auth-module').then(m => m.AuthModule), canActivate: [guestGuard] },
-  { path: 'register', loadChildren: () => import('./pages/auth/auth-module').then(m => m.AuthModule), canActivate: [guestGuard] },
   { path: 'dashboard', loadChildren: () => import('./pages/dashboard/dashboard-module').then(m => m.DashboardModule), canActivate: [authGuard] },
   { path: 'drive', loadChildren: () => import('./pages/drive/drive-module').then(m => m.DriveModule), canActivate: [authGuard] },
   { path: 'gallery', loadChildren: () => import('./pages/gallery/gallery-module').then(m => m.GalleryModule), canActivate: [authGuard] },

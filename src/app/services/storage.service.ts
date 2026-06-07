@@ -10,6 +10,7 @@ export interface FileItem {
   type_mime: string;
   taille: number;
   folder_id: number | null;
+  cloudinary_url?: string;
   is_deleted: boolean;
   created_at: string;
 }
@@ -122,10 +123,13 @@ export class StorageService {
                 public_id,
                 folder_id: folderId,
               })
-            )
+            ),
+            catchError(() => of(null))
           )
         );
-        return forkJoin(uploads);
+        return forkJoin(uploads).pipe(
+          map(results => results.filter((f): f is FileItem => f !== null))
+        );
       })
     );
   }
