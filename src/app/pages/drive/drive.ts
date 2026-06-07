@@ -55,14 +55,28 @@ export class Drive implements OnInit, OnDestroy {
   }
 
   load(): void {
-    this.loading = true;
-    this.loadError = false;
-    this.slowLoading = false;
-    clearTimeout(this.slowTimer);
-    this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    const cachedFiles = this.storage.getCachedFiles(this.currentFolderId);
+    const cachedFolders = this.storage.getCachedFolders(this.currentFolderId);
+    const hadCache = cachedFiles !== null;
+
+    if (hadCache) {
+      this.files = cachedFiles!;
+      this.loading = false;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+    } else {
+      this.loading = true;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+      this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    }
+    if (cachedFolders !== null) this.folders = cachedFolders;
+
     this.storage.getFiles(this.currentFolderId).pipe(timeout(60000)).subscribe({
       next: f => { this.files = f; this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); },
-      error: () => { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); }
+      error: () => { if (!hadCache) { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); } }
     });
     this.storage.getFolders(this.currentFolderId).pipe(timeout(60000)).subscribe({
       next: f => this.folders = f,

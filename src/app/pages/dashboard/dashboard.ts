@@ -19,15 +19,29 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnDestroy(): void { clearTimeout(this.slowTimer); }
 
   load(): void {
-    this.loading = true;
-    this.loadError = false;
-    this.slowLoading = false;
-    clearTimeout(this.slowTimer);
-    this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    const cachedFiles = this.storage.getCachedFiles();
+    const cachedFolders = this.storage.getCachedFolders();
+    const hadCache = cachedFiles !== null;
+
+    if (hadCache) {
+      this.recentFiles = cachedFiles!.slice(-6).reverse();
+      this.loading = false;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+    } else {
+      this.loading = true;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+      this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    }
+    if (cachedFolders !== null) this.totalFolders = cachedFolders.length;
+
     this.auth.loadMe().subscribe();
     this.storage.getFiles().pipe(timeout(60000)).subscribe({
       next: f => { this.recentFiles = f.slice(-6).reverse(); this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); },
-      error: () => { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); }
+      error: () => { if (!hadCache) { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); } }
     });
     this.storage.getFolders().pipe(timeout(60000)).subscribe({
       next: f => this.totalFolders = f.length,

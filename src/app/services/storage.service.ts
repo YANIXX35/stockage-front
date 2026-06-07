@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -25,6 +26,20 @@ export class StorageService {
   private http = inject(HttpClient);
   private api = environment.apiUrl;
 
+  private _filesCache = new Map<string, FileItem[]>();
+  private _foldersCache = new Map<string, FolderItem[]>();
+  private _trashCache: FileItem[] | null = null;
+
+  getCachedFiles(folderId?: number): FileItem[] | null {
+    return this._filesCache.get(folderId != null ? String(folderId) : 'root') ?? null;
+  }
+
+  getCachedFolders(parentId?: number): FolderItem[] | null {
+    return this._foldersCache.get(parentId != null ? String(parentId) : 'root') ?? null;
+  }
+
+  getCachedTrash(): FileItem[] | null { return this._trashCache; }
+
   // ── FICHIERS ────────────────────────────────────────────
   uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
     const fd = new FormData();
@@ -34,12 +49,13 @@ export class StorageService {
   }
 
   getFiles(folderId?: number): Observable<FileItem[]> {
+    const key = folderId != null ? String(folderId) : 'root';
     const url = folderId != null ? `${this.api}/files?folder_id=${folderId}` : `${this.api}/files`;
-    return this.http.get<FileItem[]>(url);
+    return this.http.get<FileItem[]>(url).pipe(tap(f => this._filesCache.set(key, f)));
   }
 
   getTrash(): Observable<FileItem[]> {
-    return this.http.get<FileItem[]>(`${this.api}/files/trash`);
+    return this.http.get<FileItem[]>(`${this.api}/files/trash`).pipe(tap(f => this._trashCache = f));
   }
 
   downloadUrl(fileId: number): string {
@@ -71,8 +87,9 @@ export class StorageService {
 
   // ── DOSSIERS ────────────────────────────────────────────
   getFolders(parentId?: number): Observable<FolderItem[]> {
+    const key = parentId != null ? String(parentId) : 'root';
     const url = parentId != null ? `${this.api}/folders?parent_id=${parentId}` : `${this.api}/folders`;
-    return this.http.get<FolderItem[]>(url);
+    return this.http.get<FolderItem[]>(url).pipe(tap(f => this._foldersCache.set(key, f)));
   }
 
   createFolder(nom: string, parentId?: number): Observable<FolderItem> {

@@ -17,14 +17,26 @@ export class Gallery implements OnInit, OnDestroy {
   ngOnDestroy(): void { clearTimeout(this.slowTimer); }
 
   load(): void {
-    this.loading = true;
-    this.loadError = false;
-    this.slowLoading = false;
-    clearTimeout(this.slowTimer);
-    this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    const cached = this.storage.getCachedFiles();
+    const hadCache = cached !== null;
+
+    if (hadCache) {
+      this.allFiles = cached!;
+      this.loading = false;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+    } else {
+      this.loading = true;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+      this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    }
+
     this.storage.getFiles().pipe(timeout(60000)).subscribe({
       next: f => { this.allFiles = f; this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); },
-      error: () => { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); }
+      error: () => { if (!hadCache) { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); } }
     });
   }
 
