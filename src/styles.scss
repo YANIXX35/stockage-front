@@ -795,13 +795,39 @@ input, button { font-family: inherit; }
 }
 
 /* ── ADMIN ───────────────────────────────────────────────── */
-.admin-stats { display: flex; gap: 12px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.admin-page { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }
+
+.admin-nav {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0 2rem; height: 56px; border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+  .admin-nav-brand {
+    display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-weight: 700; font-size: 0.95rem;
+    svg { color: var(--accent); flex-shrink: 0; }
+  }
+  .admin-nav-title {
+    flex: 1; text-align: center; font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0;
+  }
+  .admin-nav-right { display: flex; align-items: center; gap: 1rem; }
+  .admin-nav-user { font-size: 0.82rem; color: var(--text-muted); }
+  .admin-nav-back {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text-secondary); font-size: 0.82rem; font-weight: 500; text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+    &:hover { border-color: rgba(108,99,255,0.4); color: var(--accent); }
+  }
+}
+
+.admin-content { flex: 1; padding: 1.75rem 2.5rem; overflow-y: auto; }
+
+.admin-stats { display: flex; gap: 14px; margin-bottom: 1.5rem; flex-wrap: wrap; }
 .admin-stat {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1rem 1.5rem; text-align: center; min-width: 110px; transition: border-color 0.2s;
+  padding: 1rem 2rem; text-align: center; min-width: 130px; transition: border-color 0.2s;
   &:hover { border-color: rgba(108,99,255,0.25); }
   &.suspended strong { color: var(--danger); }
-  strong { display: block; font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; }
+  strong { display: block; font-size: 1.6rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; }
   span { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 }
 
@@ -810,12 +836,12 @@ input, button { font-family: inherit; }
   .admin-search {
     display: flex; align-items: center; gap: 8px;
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 7px 12px; flex: 1; max-width: 320px;
+    padding: 8px 14px; flex: 1; max-width: 400px;
     svg { color: var(--text-muted); flex-shrink: 0; }
     input { background: none; border: none; outline: none; color: var(--text-primary); font-size: 0.875rem; width: 100%; }
   }
   .btn-add-user {
-    display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px;
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
     background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
     font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
     &:hover { opacity: 0.88; }
@@ -824,13 +850,13 @@ input, button { font-family: inherit; }
 
 .users-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .table-header {
-  display: grid; grid-template-columns: 2fr 2fr 1.8fr 80px 100px 100px; gap: 1rem;
-  padding: 10px 14px; background: var(--surface-2);
+  display: grid; grid-template-columns: 2.2fr 2.5fr 2fr 90px 110px 110px; gap: 1.2rem;
+  padding: 11px 20px; background: var(--surface-2);
   font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
 }
 .table-row {
-  display: grid; grid-template-columns: 2fr 2fr 1.8fr 80px 100px 100px; gap: 1rem;
-  padding: 11px 14px; border-top: 1px solid var(--border); align-items: center; font-size: 0.855rem;
+  display: grid; grid-template-columns: 2.2fr 2.5fr 2fr 90px 110px 110px; gap: 1.2rem;
+  padding: 13px 20px; border-top: 1px solid var(--border); align-items: center; font-size: 0.875rem;
   transition: background 0.15s;
   &:hover { background: var(--surface-2); }
   &.row-inactive { opacity: 0.6; }
