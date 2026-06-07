@@ -491,6 +491,27 @@ input, button { font-family: inherit; }
   }
 
   .auth-switch { text-align: center; font-size: 0.83rem; color: var(--text-muted); margin-top: 1.2rem; }
+
+  .otp-hint {
+    text-align: center; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;
+    strong { color: var(--text-primary); }
+  }
+
+  .otp-input {
+    font-size: 1.5rem; font-weight: 700; letter-spacing: 10px; text-align: center;
+  }
+
+  .otp-actions {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 1rem; font-size: 0.82rem;
+    .otp-sep { color: var(--text-muted); }
+  }
+
+  .btn-link {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: 0.82rem; padding: 0; text-decoration: underline;
+    &:disabled { opacity: 0.45; cursor: not-allowed; text-decoration: none; }
+  }
 }
 
 /* ── DASHBOARD ───────────────────────────────────────────── */

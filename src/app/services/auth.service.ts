@@ -41,7 +41,11 @@ export class AuthService {
     return this.currentUser?.is_admin ?? false;
   }
 
-  register(data: { email: string; nom: string; prenom: string; password: string }): Observable<User> {
+  sendOtp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.api}/auth/send-otp`, { email });
+  }
+
+  register(data: { email: string; nom: string; prenom: string; password: string; otp: string }): Observable<User> {
     return this.http.post<User>(`${this.api}/auth/register`, data);
   }
 
