@@ -108,11 +108,11 @@
         </div>
       }
 
-      @if (loading) {
+      @if (loading && !slowLoading) {
         <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div>
-      } @else if (loadError) {
+      } @else if ((loading && slowLoading) || loadError) {
         <div class="load-error">
-          <p>Le serveur est injoignable.</p>
+          <p>{{ loadError ? 'Serveur injoignable.' : 'Le serveur met du temps à répondre...' }}</p>
           <button class="btn-retry" (click)="load()">Réessayer</button>
         </div>
       } @else if (files.length === 0 && folders.length === 0) {

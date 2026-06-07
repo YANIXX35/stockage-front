@@ -18,6 +18,8 @@ export class Drive implements OnInit, OnDestroy {
   // États de chargement
   loading = true;
   loadError = false;
+  slowLoading = false;
+  private slowTimer: any;
   uploading = false;
   uploadCount = 0;
 
@@ -49,14 +51,18 @@ export class Drive implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.toastTimer);
+    clearTimeout(this.slowTimer);
   }
 
   load(): void {
     this.loading = true;
     this.loadError = false;
+    this.slowLoading = false;
+    clearTimeout(this.slowTimer);
+    this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
     this.storage.getFiles(this.currentFolderId).pipe(timeout(60000)).subscribe({
-      next: f => { this.files = f; this.loading = false; },
-      error: () => { this.loading = false; this.loadError = true; }
+      next: f => { this.files = f; this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer); },
+      error: () => { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); }
     });
     this.storage.getFolders(this.currentFolderId).pipe(timeout(60000)).subscribe({
       next: f => this.folders = f,

@@ -10,10 +10,10 @@
         <button [class.active]="filter === 'audio'" (click)="filter = 'audio'">Audio</button>
         <button [class.active]="filter === 'doc'" (click)="filter = 'doc'">Documents</button>
       </div>
-      @if (loading) { <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div> }
-      @if (loadError) {
+      @if (loading && !slowLoading) { <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div> }
+      @if ((loading && slowLoading) || loadError) {
         <div class="load-error">
-          <p>Le serveur est injoignable.</p>
+          <p>{{ loadError ? 'Serveur injoignable.' : 'Le serveur met du temps à répondre...' }}</p>
           <button class="btn-retry" (click)="load()">Réessayer</button>
         </div>
       }
