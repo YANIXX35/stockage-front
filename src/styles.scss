@@ -491,6 +491,7 @@ input, button { font-family: inherit; }
   }
 
   .auth-switch { text-align: center; font-size: 0.83rem; color: var(--text-muted); margin-top: 1.2rem; }
+  .forgot-link { font-size: 0.83rem; color: var(--text-muted); text-decoration: none; &:hover { color: var(--accent); } }
 
   .otp-hint {
     text-align: center; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;
