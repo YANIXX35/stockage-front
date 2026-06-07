@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -29,6 +29,7 @@ export class StorageService {
   private _filesCache = new Map<string, FileItem[]>();
   private _foldersCache = new Map<string, FolderItem[]>();
   private _trashCache: FileItem[] | null = null;
+  private _blobUrlCache = new Map<number, string>();
 
   getCachedFiles(folderId?: number): FileItem[] | null {
     return this._filesCache.get(folderId != null ? String(folderId) : 'root') ?? null;
@@ -39,6 +40,18 @@ export class StorageService {
   }
 
   getCachedTrash(): FileItem[] | null { return this._trashCache; }
+
+  getBlobUrl(fileId: number): Observable<string> {
+    const cached = this._blobUrlCache.get(fileId);
+    if (cached) return of(cached);
+    return this.http.get(this.downloadUrl(fileId), { responseType: 'blob' }).pipe(
+      map(blob => {
+        const url = URL.createObjectURL(blob);
+        this._blobUrlCache.set(fileId, url);
+        return url;
+      })
+    );
+  }
 
   // ── FICHIERS ────────────────────────────────────────────
   uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {

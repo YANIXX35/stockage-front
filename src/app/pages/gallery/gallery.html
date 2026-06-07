@@ -29,7 +29,13 @@
         @for (f of filtered; track f.id) {
           <div class="gallery-item" (click)="preview = f">
             <div class="gallery-thumb">
-              <span>{{ storage.getFileIcon(f.type_mime) }}</span>
+              @if (storage.isImage(f.type_mime) && blobUrls.has(f.id)) {
+                <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original">
+              } @else if (storage.isVideo(f.type_mime) && blobUrls.has(f.id)) {
+                <video [src]="blobUrls.get(f.id)" preload="metadata" muted playsinline></video>
+              } @else {
+                <span>{{ storage.getFileIcon(f.type_mime) }}</span>
+              }
             </div>
             <div class="gallery-info">
               <span class="gallery-name">{{ f.nom_original }}</span>
