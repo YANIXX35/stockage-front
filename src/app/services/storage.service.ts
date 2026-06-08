@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, from, timer, Subject } from 'rxjs';
-import { tap, map, retry, catchError, switchMap, mergeMap, toArray } from 'rxjs/operators';
+import { Observable, of, from, timer, Subject, firstValueFrom } from 'rxjs';
+import { tap, map, retry, catchError, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -110,33 +110,54 @@ export class StorageService {
     return this.http.post<FileItem>(`${this.api}/files/register`, data);
   }
 
-  uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
+  private async _uploadOne(
+    file: File,
+    config: { cloud_name: string; upload_preset: string },
+    folderId?: number
+  ): Promise<FileItem | null> {
+    try {
+      const { secure_url, public_id } = await this.uploadToCloudinary(file, config);
+      return await firstValueFrom(this.registerFile({
+        nom_original: file.name,
+        type_mime: file.type || 'application/octet-stream',
+        taille: file.size,
+        cloudinary_url: secure_url,
+        public_id,
+        folder_id: folderId,
+      }));
+    } catch {
+      return null;
+    }
+  }
+
+  private async _runUploads(
+    files: File[],
+    config: { cloud_name: string; upload_preset: string },
+    folderId?: number
+  ): Promise<FileItem[]> {
     let done = 0;
     const total = files.length;
+    const BATCH = 3;
+    const allResults: FileItem[] = [];
+
+    for (let i = 0; i < files.length; i += BATCH) {
+      const batch = files.slice(i, i + BATCH);
+      const batchResults = await Promise.all(
+        batch.map(async file => {
+          const result = await this._uploadOne(file, config, folderId);
+          done++;
+          this.uploadDone$.next({ done, total });
+          return result;
+        })
+      );
+      allResults.push(...batchResults.filter((f): f is FileItem => f !== null));
+    }
+    return allResults;
+  }
+
+  uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
     return this.getCloudinaryConfig().pipe(
-      switchMap(config =>
-        from(files).pipe(
-          mergeMap(
-            file => from(this.uploadToCloudinary(file, config)).pipe(
-              switchMap(({ secure_url, public_id }) =>
-                this.registerFile({
-                  nom_original: file.name,
-                  type_mime: file.type || 'application/octet-stream',
-                  taille: file.size,
-                  cloudinary_url: secure_url,
-                  public_id,
-                  folder_id: folderId,
-                })
-              ),
-              tap(() => { done++; this.uploadDone$.next({ done, total }); }),
-              catchError(() => { done++; this.uploadDone$.next({ done, total }); return of(null); })
-            ),
-            3
-          ),
-          toArray(),
-          map(results => results.filter((f): f is FileItem => f !== null))
-        )
-      )
+      switchMap(config => from(this._runUploads(files, config, folderId)))
     );
   }
 
