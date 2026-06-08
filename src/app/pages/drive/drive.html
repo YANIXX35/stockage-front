@@ -129,12 +129,10 @@
           @for (f of files; track f.id) {
             <div class="file-row">
               <span class="file-icon">
-                @if ((storage.isImage(f.type_mime) || storage.isVideo(f.type_mime)) && blobUrls.has(f.id)) {
-                  @if (storage.isImage(f.type_mime)) {
-                    <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original" class="row-thumb">
-                  } @else {
-                    <video [src]="blobUrls.get(f.id)" preload="metadata" muted playsinline class="row-thumb"></video>
-                  }
+                @if (f.cloudinary_url && (storage.isImage(f.type_mime) || storage.isVideo(f.type_mime))) {
+                  <img [src]="getThumbUrl(f)" [alt]="f.nom_original" class="row-thumb" loading="lazy">
+                } @else if ((storage.isImage(f.type_mime) || storage.isVideo(f.type_mime)) && blobUrls.has(f.id)) {
+                  <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original" class="row-thumb">
                 } @else {
                   {{ storage.getFileIcon(f.type_mime) }}
                 }
