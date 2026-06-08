@@ -21,6 +21,7 @@ export class Register {
 
   step: 'form' | 'otp' = 'form';
   loading = false;
+  showPass = false;
   slowServer = false;
   error = '';
   resendCooldown = 0;

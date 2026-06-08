@@ -15,6 +15,7 @@ export class Login {
   });
   loading = false;
   error = '';
+  showPass = false;
 
   submit(): void {
     if (this.form.invalid) return;

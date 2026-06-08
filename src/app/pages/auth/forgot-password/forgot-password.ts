@@ -16,6 +16,7 @@ export class ForgotPassword {
 
   step: 'email' | 'otp' | 'newpass' = 'email';
   loading = false;
+  showPass = false;
   slowServer = false;
   error = '';
   resendCooldown = 0;
