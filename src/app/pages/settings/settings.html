@@ -24,9 +24,31 @@
             <p>{{ auth.quotaPercent() }}% de ton espace utilisé</p>
           </div>
         </div>
+        <div class="settings-card">
+          <h3>Changer le mot de passe</h3>
+          @if (passSuccess) { <div class="auth-success">{{ passSuccess }}</div> }
+          @if (passError)   { <div class="auth-error">{{ passError }}</div> }
+          <div class="form-group">
+            <label>Mot de passe actuel</label>
+            <input type="password" [formControl]="currentPassCtrl" placeholder="••••••">
+          </div>
+          <div class="form-group">
+            <label>Nouveau mot de passe</label>
+            <input type="password" [formControl]="newPassCtrl" placeholder="6 caractères minimum">
+          </div>
+          <div class="form-group">
+            <label>Confirmer le nouveau mot de passe</label>
+            <input type="password" [formControl]="confirmCtrl" placeholder="••••••">
+          </div>
+          <button class="btn-submit"
+            [disabled]="currentPassCtrl.invalid || newPassCtrl.invalid || confirmCtrl.invalid || passLoading"
+            (click)="changePassword()">
+            {{ passLoading ? 'Modification...' : 'Modifier le mot de passe' }}
+          </button>
+        </div>
         <div class="settings-card danger-zone">
           <h3>Déconnexion</h3>
-          <button class="btn-logout" (click)="auth.logout()">🚪 Se déconnecter</button>
+          <button class="btn-logout" (click)="auth.logout()">Se déconnecter</button>
         </div>
       }
     </div>

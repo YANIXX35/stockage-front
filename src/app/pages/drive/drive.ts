@@ -62,9 +62,13 @@ export class Drive implements OnInit, OnDestroy {
   private loadThumbnails(files: FileItem[]): void {
     files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
-        this.storage.getBlobUrl(f.id).subscribe(url => {
-          if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
-        });
+        if (f.cloudinary_url) {
+          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(f.cloudinary_url));
+        } else {
+          this.storage.getBlobUrl(f.id).subscribe(url => {
+            if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
+          });
+        }
       }
     });
   }
@@ -155,7 +159,12 @@ export class Drive implements OnInit, OnDestroy {
         this.storage.invalidateFilesCache(this.currentFolderId);
         this.loadThumbnails(newFiles);
         this.auth.loadMe().subscribe();
-        this.showToast(`${files.length} fichier${files.length > 1 ? 's uploadés' : ' uploadé'} avec succès`, 'success');
+        const n = newFiles.length;
+        const failed = files.length - n;
+        const msg = n > 0
+          ? `${n} fichier${n > 1 ? 's uploadés' : ' uploadé'} avec succès${failed > 0 ? ` (${failed} échoué${failed > 1 ? 's' : ''})` : ''}`
+          : `Échec de l'upload (${failed} fichier${failed > 1 ? 's' : ''})`;
+        this.showToast(msg, n > 0 ? 'success' : 'error');
       },
       error: (err) => {
         this.uploading = false;

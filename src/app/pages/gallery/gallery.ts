@@ -47,9 +47,13 @@ export class Gallery implements OnInit, OnDestroy {
   private loadThumbnails(files: FileItem[]): void {
     files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
-        this.storage.getBlobUrl(f.id).subscribe(url => {
-          if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
-        });
+        if (f.cloudinary_url) {
+          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(f.cloudinary_url));
+        } else {
+          this.storage.getBlobUrl(f.id).subscribe(url => {
+            if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
+          });
+        }
       }
     });
   }
