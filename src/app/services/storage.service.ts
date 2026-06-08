@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, from, forkJoin, timer } from 'rxjs';
-import { tap, map, retry, catchError, switchMap } from 'rxjs/operators';
+import { Observable, of, from, timer, Subject } from 'rxjs';
+import { tap, map, retry, catchError, switchMap, mergeMap, toArray } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -33,6 +33,7 @@ export class StorageService {
   private _blobUrlCache = new Map<number, string>();
   private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
+  readonly uploadDone$ = new Subject<{ done: number; total: number }>();
 
   getCachedFiles(folderId?: number): FileItem[] | null {
     return this._filesCache.get(folderId != null ? String(folderId) : 'root') ?? null;
@@ -110,27 +111,32 @@ export class StorageService {
   }
 
   uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
+    let done = 0;
+    const total = files.length;
     return this.getCloudinaryConfig().pipe(
-      switchMap(config => {
-        const uploads = files.map(file =>
-          from(this.uploadToCloudinary(file, config)).pipe(
-            switchMap(({ secure_url, public_id }) =>
-              this.registerFile({
-                nom_original: file.name,
-                type_mime: file.type || 'application/octet-stream',
-                taille: file.size,
-                cloudinary_url: secure_url,
-                public_id,
-                folder_id: folderId,
-              })
+      switchMap(config =>
+        from(files).pipe(
+          mergeMap(
+            file => from(this.uploadToCloudinary(file, config)).pipe(
+              switchMap(({ secure_url, public_id }) =>
+                this.registerFile({
+                  nom_original: file.name,
+                  type_mime: file.type || 'application/octet-stream',
+                  taille: file.size,
+                  cloudinary_url: secure_url,
+                  public_id,
+                  folder_id: folderId,
+                })
+              ),
+              tap(() => { done++; this.uploadDone$.next({ done, total }); }),
+              catchError(() => { done++; this.uploadDone$.next({ done, total }); return of(null); })
             ),
-            catchError(() => of(null))
-          )
-        );
-        return forkJoin(uploads).pipe(
+            3
+          ),
+          toArray(),
           map(results => results.filter((f): f is FileItem => f !== null))
-        );
-      })
+        )
+      )
     );
   }
 

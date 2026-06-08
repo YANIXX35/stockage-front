@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, ChangeDetectorRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
@@ -14,6 +14,7 @@ export class Drive implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   blobUrls = new Map<number, SafeUrl>();
 
   files: FileItem[] = [];
@@ -27,6 +28,7 @@ export class Drive implements OnInit, OnDestroy {
   private slowTimer: any;
   uploading = false;
   uploadCount = 0;
+  uploadDone = 0;
 
   // Nouveau dossier
   newFolderName = '';
@@ -150,11 +152,19 @@ export class Drive implements OnInit, OnDestroy {
     input.value = '';
     this.uploading = true;
     this.uploadCount = files.length;
+    this.uploadDone = 0;
+
+    const progressSub = this.storage.uploadDone$.subscribe(({ done }) => {
+      this.uploadDone = done;
+      this.cdr.detectChanges();
+    });
+
     this.storage.uploadFiles(files, this.currentFolderId).subscribe({
       next: (newFiles) => {
+        progressSub.unsubscribe();
         this.uploading = false;
         this.uploadCount = 0;
-        // Ajout immédiat dans la liste — pas de reload nécessaire
+        this.uploadDone = 0;
         this.files = [...this.files, ...newFiles];
         this.storage.invalidateFilesCache(this.currentFolderId);
         this.loadThumbnails(newFiles);
@@ -167,8 +177,10 @@ export class Drive implements OnInit, OnDestroy {
         this.showToast(msg, n > 0 ? 'success' : 'error');
       },
       error: (err) => {
+        progressSub.unsubscribe();
         this.uploading = false;
         this.uploadCount = 0;
+        this.uploadDone = 0;
         const detail = err?.error?.detail || 'Erreur lors de l\'upload';
         this.showToast(detail, 'error');
       }
@@ -219,6 +231,6 @@ export class Drive implements OnInit, OnDestroy {
   showToast(msg: string, type: 'success' | 'error'): void {
     this.toast = { msg, type };
     clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => this.toast = null, 3500);
+    this.toastTimer = setTimeout(() => this.toast = null, 5000);
   }
 }
