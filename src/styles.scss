@@ -707,18 +707,18 @@ input, button { font-family: inherit; }
 
 .file-row {
   display: grid;
-  grid-template-columns: 28px 1fr 80px 100px auto;
+  grid-template-columns: 46px 1fr 80px 100px auto;
   align-items: center;
   gap: 1rem;
-  padding: 10px 14px;
+  padding: 8px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   transition: background 0.15s, border-color 0.15s;
   &:hover { background: var(--surface-2); border-color: rgba(108,99,255,0.15); }
   &.deleted { opacity: 0.6; }
-  .file-icon { font-size: 1.1rem; text-align: center;
-    .row-thumb { width: 26px; height: 26px; object-fit: cover; border-radius: 4px; display: block; }
+  .file-icon { font-size: 1.4rem; text-align: center; display: flex; align-items: center; justify-content: center;
+    .row-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; display: block; }
   }
   .file-name { font-size: 0.865rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   .file-size { font-size: 0.75rem; color: var(--text-muted); }
@@ -1359,6 +1359,16 @@ input, button { font-family: inherit; }
 
   /* Drive toolbar */
   .drive-toolbar { flex-wrap: wrap; }
+
+  /* Drive file rows */
+  .file-row {
+    grid-template-columns: 46px 1fr auto auto;
+    gap: 8px;
+    padding: 8px 10px;
+    .file-date { display: none; }
+    .file-size { min-width: 52px; text-align: right; }
+    .file-actions button { padding: 7px 8px; }
+  }
 
   /* ── Admin : full-width layout ─────────────── */
   .admin-nav {
