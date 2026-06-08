@@ -9,17 +9,19 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-group">
         <label>Email</label>
-        <input type="email" formControlName="email" placeholder="mon@email.com">
+        <input type="email" formControlName="email" placeholder="mon@email.com"
+               autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false">
       </div>
       <div class="form-group">
         <label>Mot de passe</label>
-        <input type="password" formControlName="password" placeholder="••••••">
+        <input type="password" formControlName="password" placeholder="••••••"
+               autocomplete="current-password" autocapitalize="none" autocorrect="off">
       </div>
       <button type="submit" class="btn-submit" [disabled]="form.invalid || loading">
         {{ loading ? 'Connexion...' : 'Se connecter' }}
       </button>
     </form>
     <p class="auth-switch"><a routerLink="/login/forgot-password" class="forgot-link">Mot de passe oublié ?</a></p>
-    <p class="auth-switch">Pas de compte ? <a routerLink="/register/register">Créer un compte</a></p>
+    <p class="auth-switch">Pas de compte ? <a routerLink="/login/register">Créer un compte</a></p>
   </div>
 </div>

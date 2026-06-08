@@ -12,20 +12,24 @@
         <div class="form-row">
           <div class="form-group">
             <label>Prénom</label>
-            <input type="text" formControlName="prenom" placeholder="Jean">
+            <input type="text" formControlName="prenom" placeholder="Jean"
+                 autocomplete="given-name" autocorrect="off">
           </div>
           <div class="form-group">
             <label>Nom</label>
-            <input type="text" formControlName="nom" placeholder="Dupont">
+            <input type="text" formControlName="nom" placeholder="Dupont"
+                   autocomplete="family-name" autocorrect="off">
           </div>
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" formControlName="email" placeholder="jean@email.com">
+          <input type="email" formControlName="email" placeholder="jean@email.com"
+                 autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <div class="form-group">
           <label>Mot de passe</label>
-          <input type="password" formControlName="password" placeholder="6 caractères minimum">
+          <input type="password" formControlName="password" placeholder="6 caractères minimum"
+                 autocomplete="new-password" autocapitalize="none" autocorrect="off">
         </div>
         <button type="submit" class="btn-submit" [disabled]="form.invalid || loading">
           {{ loading ? 'Envoi du code...' : 'Envoyer le code de vérification' }}
