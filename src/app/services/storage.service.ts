@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, from, timer, Subject, firstValueFrom } from 'rxjs';
-import { tap, map, retry, catchError, switchMap } from 'rxjs/operators';
+import { Observable, of, from, timer, Subject, firstValueFrom, defer } from 'rxjs';
+import { tap, map, retry, catchError, switchMap, finalize } from 'rxjs/operators';
+import { SyncService } from './sync.service';
 import { environment } from '../../environments/environment';
 
 export interface FileItem {
@@ -25,7 +26,8 @@ export interface FolderItem {
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   private http = inject(HttpClient);
-  private api = environment.apiUrl;
+  private api  = environment.apiUrl;
+  private sync = inject(SyncService);
 
   private static readonly LS_FILES   = 'sapp_files';
   private static readonly LS_FOLDERS = 'sapp_folders';
@@ -176,13 +178,14 @@ export class StorageService {
   getFiles(folderId?: number): Observable<FileItem[]> {
     const key = folderId != null ? String(folderId) : 'root';
     const url = folderId != null ? `${this.api}/files?folder_id=${folderId}` : `${this.api}/files`;
-    return this.http.get<FileItem[]>(url).pipe(
+    return defer(() => { this.sync.start(); return this.http.get<FileItem[]>(url); }).pipe(
       tap(f => {
         this._filesCache.set(key, f);
         if (folderId == null) {
           try { localStorage.setItem(StorageService.LS_FILES, JSON.stringify(f)); } catch {}
         }
-      })
+      }),
+      finalize(() => this.sync.done())
     );
   }
 
@@ -221,13 +224,14 @@ export class StorageService {
   getFolders(parentId?: number): Observable<FolderItem[]> {
     const key = parentId != null ? String(parentId) : 'root';
     const url = parentId != null ? `${this.api}/folders?parent_id=${parentId}` : `${this.api}/folders`;
-    return this.http.get<FolderItem[]>(url).pipe(
+    return defer(() => { this.sync.start(); return this.http.get<FolderItem[]>(url); }).pipe(
       tap(f => {
         this._foldersCache.set(key, f);
         if (parentId == null) {
           try { localStorage.setItem(StorageService.LS_FOLDERS, JSON.stringify(f)); } catch {}
         }
-      })
+      }),
+      finalize(() => this.sync.done())
     );
   }
 

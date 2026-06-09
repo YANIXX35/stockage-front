@@ -1,7 +1,12 @@
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.sync-spin { animation: spin 0.9s linear infinite; flex-shrink: 0; }
+
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 0 2rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -14,13 +19,45 @@
     color: var(--text-primary);
     margin: 0;
     letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .sync-area {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .sync-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+
+    &--offline {
+      background: rgba(245,158,11,0.1);
+      color: var(--warn);
+      border: 1px solid rgba(245,158,11,0.22);
+    }
+
+    &--syncing {
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+    }
   }
 
   .topbar-user {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
   }
 
   .user-avatar {
@@ -43,5 +80,15 @@
     font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 500;
+  }
+}
+
+@media (max-width: 767px) {
+  .topbar {
+    padding: 0 1rem;
+    gap: 8px;
+    .sync-chip-text { display: none; }
+    .sync-chip { padding: 4px 6px; }
+    .user-name { display: none; }
   }
 }

@@ -1,6 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { UiService } from '../../services/ui.service';
+import { SyncService } from '../../services/sync.service';
 
 @Component({
   selector: 'app-topbar',
@@ -11,5 +12,6 @@ import { UiService } from '../../services/ui.service';
 export class Topbar {
   @Input() title = '';
   auth = inject(AuthService);
-  ui = inject(UiService);
+  ui   = inject(UiService);
+  sync = inject(SyncService);
 }

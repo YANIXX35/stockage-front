@@ -108,11 +108,24 @@
         </div>
       }
 
-      @if (loading && !slowLoading) {
-        <div class="loading">Connexion au serveur...<small>Premier démarrage peut prendre ~30s</small></div>
-      } @else if ((loading && slowLoading) || loadError) {
+      @if (loading) {
+        <div class="files-list">
+          @for (i of skeletonRows; track i) {
+            <div class="file-row" aria-hidden="true" style="cursor:default;pointer-events:none">
+              <span class="file-icon"><div class="skeleton skel-circle" style="width:34px;height:34px"></div></span>
+              <span class="file-name"><div class="skeleton skel-text" style="max-width:220px"></div></span>
+              <span class="file-size"><div class="skeleton skel-text" style="width:46px"></div></span>
+              <span class="file-date"><div class="skeleton skel-text" style="width:62px"></div></span>
+              <div class="file-actions"></div>
+            </div>
+          }
+        </div>
+        @if (slowLoading) {
+          <p class="slow-hint">Serveur en cours de démarrage... <button class="btn-link" (click)="load()">Réessayer</button></p>
+        }
+      } @else if (loadError) {
         <div class="load-error">
-          <p>{{ loadError ? 'Serveur injoignable.' : 'Le serveur met du temps à répondre...' }}</p>
+          <p>Serveur injoignable.</p>
           <button class="btn-retry" (click)="load()">Réessayer</button>
         </div>
       } @else if (files.length === 0 && folders.length === 0) {

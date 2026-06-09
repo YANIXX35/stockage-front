@@ -46,6 +46,8 @@ export class Drive implements OnInit, OnDestroy {
   toast: { msg: string; type: 'success' | 'error' } | null = null;
   private toastTimer: any;
 
+  readonly skeletonRows = [1,2,3,4,5,6,7,8];
+
   // Confirmation suppression (remplace confirm() natif)
   pendingDelete: { type: 'file' | 'folder'; id: number; label: string } | null = null;
 
