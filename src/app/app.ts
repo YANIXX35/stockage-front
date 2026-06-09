@@ -16,6 +16,7 @@ export class App implements OnInit {
     this.http.get(`${baseUrl}/`).pipe(catchError(() => of(null))).subscribe();
 
     if (this.auth.token) {
+      this.auth.silentRefresh();
       this.auth.loadMe().subscribe();
       // Pré-charge le cache silencieusement dès le démarrage
       this.storage.getFiles().pipe(catchError(() => of([]))).subscribe();
