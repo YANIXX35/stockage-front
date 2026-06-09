@@ -54,6 +54,20 @@ input, button { font-family: inherit; }
   animation: shimmer 1.6s infinite linear;
   border-radius: var(--radius-sm);
 }
+.skel-text   { height: 13px; border-radius: 4px; display: block; }
+.skel-title  { height: 22px; border-radius: 5px; display: block; }
+.skel-circle { border-radius: 50%; display: block; }
+
+.slow-hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 1.5rem;
+  .btn-link {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: inherit; padding: 0; text-decoration: underline;
+  }
+}
 
 /* ── APP LAYOUT ──────────────────────────────────────────── */
 .app-layout { display: flex; min-height: 100vh; }

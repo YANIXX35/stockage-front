@@ -230,6 +230,7 @@
         <h3>Supprimer l'utilisateur ?</h3>
       </div>
       <div class="modal-body">
+        @if (deleteError) { <div class="modal-error">{{ deleteError }}</div> }
         <p class="confirm-text">
           Supprimer <strong>{{ pendingDelete.prenom }} {{ pendingDelete.nom }}</strong> ? Cette action est irréversible et supprimera tous ses fichiers.
         </p>

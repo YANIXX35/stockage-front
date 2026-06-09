@@ -16,22 +16,27 @@ export class Dashboard implements OnInit, OnDestroy {
   loading = true;
   loadError = false;
   slowLoading = false;
+  readonly skeletonItems = [1, 2, 3, 4, 5, 6];
   private slowTimer: any;
   blobUrls = new Map<number, SafeUrl>();
 
   ngOnInit(): void { this.load(); }
   ngOnDestroy(): void { clearTimeout(this.slowTimer); }
 
+  getThumbUrl(f: FileItem): string {
+    if (!f.cloudinary_url) return '';
+    if (this.storage.isVideo(f.type_mime)) {
+      return f.cloudinary_url.replace('/video/upload/', '/video/upload/w_300,h_300,c_fill,so_0,f_jpg/');
+    }
+    return f.cloudinary_url.replace('/image/upload/', '/image/upload/w_300,h_300,c_fill/');
+  }
+
   private loadThumbnails(files: FileItem[]): void {
-    files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
+    files.filter(f => (this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)) && !f.cloudinary_url).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
-        if (f.cloudinary_url) {
-          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(f.cloudinary_url));
-        } else {
-          this.storage.getBlobUrl(f.id).subscribe(url => {
-            if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
-          });
-        }
+        this.storage.getBlobUrl(f.id).subscribe(url => {
+          if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
+        });
       }
     });
   }
@@ -54,7 +59,7 @@ export class Dashboard implements OnInit, OnDestroy {
       this.loadError = false;
       this.slowLoading = false;
       clearTimeout(this.slowTimer);
-      this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+      this.slowTimer = setTimeout(() => this.slowLoading = true, 15000);
     }
     if (cachedFolders !== null) this.totalFolders = cachedFolders.length;
 
@@ -63,10 +68,19 @@ export class Dashboard implements OnInit, OnDestroy {
       next: f => {
         this.totalFiles = f.length;
         this.recentFiles = f.slice(-6).reverse();
-        this.loading = false; this.slowLoading = false; clearTimeout(this.slowTimer);
+        this.loading = false;
+        this.slowLoading = false;
+        clearTimeout(this.slowTimer);
         this.loadThumbnails(this.recentFiles);
       },
-      error: () => { if (!hadCache) { this.loading = false; this.loadError = true; this.slowLoading = false; clearTimeout(this.slowTimer); } }
+      error: () => {
+        if (!hadCache) {
+          this.loading = false;
+          this.loadError = true;
+          this.slowLoading = false;
+          clearTimeout(this.slowTimer);
+        }
+      }
     });
     this.storage.getFolders().pipe(timeout(60000)).subscribe({
       next: f => this.totalFolders = f.length,

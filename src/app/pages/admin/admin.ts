@@ -26,6 +26,7 @@ export class Admin implements OnInit {
 
   // Confirmation suppression
   pendingDelete: any = null;
+  deleteError = '';
 
   ngOnInit(): void { this.load(); }
 
@@ -121,13 +122,14 @@ export class Admin implements OnInit {
   }
 
   // ── SUPPRIMER ────────────────────────────────────────────
-  confirmDelete(u: any): void { this.pendingDelete = u; }
+  confirmDelete(u: any): void { this.pendingDelete = u; this.deleteError = ''; }
 
   doDelete(): void {
     if (!this.pendingDelete) return;
+    this.deleteError = '';
     this.storage.deleteUser(this.pendingDelete.id).subscribe({
       next: () => { this.users = this.users.filter(u => u.id !== this.pendingDelete.id); this.pendingDelete = null; },
-      error: e => { alert(e.error?.detail || 'Erreur'); this.pendingDelete = null; }
+      error: e => { this.deleteError = e.error?.detail || 'Erreur lors de la suppression'; }
     });
   }
 }

@@ -29,7 +29,9 @@
         @for (f of filtered; track f.id) {
           <div class="gallery-item" (click)="preview = f">
             <div class="gallery-thumb">
-              @if (storage.isImage(f.type_mime) && blobUrls.has(f.id)) {
+              @if (f.cloudinary_url && (storage.isImage(f.type_mime) || storage.isVideo(f.type_mime))) {
+                <img [src]="getThumbUrl(f)" [alt]="f.nom_original">
+              } @else if (storage.isImage(f.type_mime) && blobUrls.has(f.id)) {
                 <img [src]="blobUrls.get(f.id)" [alt]="f.nom_original">
               } @else if (storage.isVideo(f.type_mime) && blobUrls.has(f.id)) {
                 <video [src]="blobUrls.get(f.id)" preload="metadata" muted playsinline></video>
@@ -51,10 +53,10 @@
             <button class="preview-close" (click)="preview = null">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            @if (storage.isImage(preview.type_mime) && blobUrls.has(preview.id)) {
-              <img class="preview-media" [src]="blobUrls.get(preview.id)" [alt]="preview.nom_original">
-            } @else if (storage.isVideo(preview.type_mime) && blobUrls.has(preview.id)) {
-              <video class="preview-media" [src]="blobUrls.get(preview.id)" controls playsinline></video>
+            @if (storage.isImage(preview.type_mime) && (preview.cloudinary_url || blobUrls.has(preview.id))) {
+              <img class="preview-media" [src]="getPreviewSrc(preview)" [alt]="preview.nom_original">
+            } @else if (storage.isVideo(preview.type_mime) && (preview.cloudinary_url || blobUrls.has(preview.id))) {
+              <video class="preview-media" [src]="getPreviewSrc(preview)" controls playsinline></video>
             } @else {
               <div class="preview-icon">{{ storage.getFileIcon(preview.type_mime) }}</div>
             }

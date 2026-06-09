@@ -11,6 +11,7 @@ export class Trash implements OnInit, OnDestroy {
   loading = true;
   loadError = false;
   slowLoading = false;
+  pendingDeleteId: number | null = null;
   private slowTimer: any;
 
   ngOnInit(): void { this.load(); }
@@ -45,7 +46,13 @@ export class Trash implements OnInit, OnDestroy {
   }
 
   deletePermanent(id: number): void {
-    if (!confirm('Supprimer définitivement ? Cette action est irréversible.')) return;
+    this.pendingDeleteId = id;
+  }
+
+  confirmDelete(): void {
+    if (this.pendingDeleteId === null) return;
+    const id = this.pendingDeleteId;
+    this.pendingDeleteId = null;
     this.storage.deleteFile(id, true).subscribe(() => { this.auth.loadMe().subscribe(); this.load(); });
   }
 }

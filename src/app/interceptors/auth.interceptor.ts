@@ -11,7 +11,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401 && !req.url.includes('/auth/login') && !req.url.includes('/auth/register') && !req.url.includes('/auth/reset-password') && !req.url.includes('/auth/forgot-password')) {
+      if (err.status === 401 && !req.url.includes('/auth/login') && !req.url.includes('/auth/register') && !req.url.includes('/auth/reset-password') && !req.url.includes('/auth/forgot-password') && !req.url.includes('/auth/send-otp')) {
         localStorage.removeItem('token');
         router.navigate(['/login/login']);
       }

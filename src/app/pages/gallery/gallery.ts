@@ -44,16 +44,24 @@ export class Gallery implements OnInit, OnDestroy {
     });
   }
 
+  getThumbUrl(f: FileItem): string {
+    if (!f.cloudinary_url) return '';
+    if (this.storage.isVideo(f.type_mime)) {
+      return f.cloudinary_url.replace('/video/upload/', '/video/upload/w_300,h_300,c_fill,so_0,f_jpg/');
+    }
+    return f.cloudinary_url.replace('/image/upload/', '/image/upload/w_300,h_300,c_fill/');
+  }
+
+  getPreviewSrc(f: FileItem): string | SafeUrl {
+    return f.cloudinary_url || this.blobUrls.get(f.id) || '';
+  }
+
   private loadThumbnails(files: FileItem[]): void {
-    files.filter(f => this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)).forEach(f => {
+    files.filter(f => (this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)) && !f.cloudinary_url).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
-        if (f.cloudinary_url) {
-          this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(f.cloudinary_url));
-        } else {
-          this.storage.getBlobUrl(f.id).subscribe(url => {
-            if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
-          });
-        }
+        this.storage.getBlobUrl(f.id).subscribe(url => {
+          if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
+        });
       }
     });
   }

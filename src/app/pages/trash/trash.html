@@ -34,3 +34,20 @@
     </div>
   </div>
 </div>
+
+@if (pendingDeleteId !== null) {
+  <div class="modal-overlay" (click)="pendingDeleteId = null">
+    <div class="modal-dialog modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Supprimer définitivement ?</h3>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-text">Cette action est <strong>irréversible</strong>. Le fichier sera supprimé définitivement.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-modal-cancel" (click)="pendingDeleteId = null">Annuler</button>
+        <button class="btn-modal-danger" (click)="confirmDelete()">Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+}
