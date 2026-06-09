@@ -13,7 +13,7 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     const baseUrl = environment.apiUrl.replace(/\/api$/, '');
-    this.http.get(`${baseUrl}/`).pipe(catchError(() => of(null))).subscribe();
+    this.http.get(`${baseUrl}/health`).pipe(catchError(() => of(null))).subscribe();
 
     if (this.auth.token) {
       this.auth.silentRefresh();

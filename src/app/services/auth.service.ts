@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { StorageService } from './storage.service';
 
 export interface User {
   id: number;
@@ -18,12 +19,23 @@ export interface User {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
+  private http    = inject(HttpClient);
+  private router  = inject(Router);
+  private storage = inject(StorageService);
   private api = environment.apiUrl;
+
+  private static readonly LS_USER = 'sapp_user';
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
+
+  constructor() {
+    // Restaure l'utilisateur depuis localStorage au démarrage (affichage immédiat)
+    try {
+      const saved = localStorage.getItem(AuthService.LS_USER);
+      if (saved) this.currentUserSubject.next(JSON.parse(saved));
+    } catch { /* données corrompues → ignoré */ }
+  }
 
   get currentUser(): User | null {
     return this.currentUserSubject.value;
@@ -68,20 +80,21 @@ export class AuthService {
 
   loadMe(): Observable<User> {
     return this.http.get<User>(`${this.api}/auth/me`).pipe(
-      tap(user => this.currentUserSubject.next(user))
+      tap(user => {
+        this.currentUserSubject.next(user);
+        try { localStorage.setItem(AuthService.LS_USER, JSON.stringify(user)); } catch {}
+      })
     );
   }
 
   silentRefresh(): void {
     if (!this.isLoggedIn()) return;
     const token = this.token!;
-    // Décode le payload sans vérification pour lire la date d'expiration
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const expiresAt = payload.exp * 1000;
       const now = Date.now();
       const daysLeft = (expiresAt - now) / (1000 * 60 * 60 * 24);
-      // Rafraîchit si moins de 15 jours restants (token de 30j → renouvelle à mi-vie)
       if (daysLeft < 15) {
         this.http.post<{ access_token: string }>(`${this.api}/auth/refresh`, {}).pipe(
           catchError(() => of(null))
@@ -89,11 +102,13 @@ export class AuthService {
           if (res) localStorage.setItem('token', res.access_token);
         });
       }
-    } catch { /* token malformé → le intercepteur 401 gère la déconnexion */ }
+    } catch { /* token malformé → intercepteur 401 gère la déconnexion */ }
   }
 
   logout(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem(AuthService.LS_USER);
+    this.storage.clearLocalCache();
     this.currentUserSubject.next(null);
     this.router.navigate(['/login/login']);
   }

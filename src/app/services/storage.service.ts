@@ -27,6 +27,9 @@ export class StorageService {
   private http = inject(HttpClient);
   private api = environment.apiUrl;
 
+  private static readonly LS_FILES   = 'sapp_files';
+  private static readonly LS_FOLDERS = 'sapp_folders';
+
   private _filesCache = new Map<string, FileItem[]>();
   private _foldersCache = new Map<string, FolderItem[]>();
   private _trashCache: FileItem[] | null = null;
@@ -34,6 +37,15 @@ export class StorageService {
   private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
   readonly uploadDone$ = new Subject<{ done: number; total: number }>();
+
+  constructor() {
+    try {
+      const f = localStorage.getItem(StorageService.LS_FILES);
+      if (f) this._filesCache.set('root', JSON.parse(f));
+      const d = localStorage.getItem(StorageService.LS_FOLDERS);
+      if (d) this._foldersCache.set('root', JSON.parse(d));
+    } catch { /* localStorage inaccessible ou données corrompues */ }
+  }
 
   getCachedFiles(folderId?: number): FileItem[] | null {
     return this._filesCache.get(folderId != null ? String(folderId) : 'root') ?? null;
@@ -164,7 +176,14 @@ export class StorageService {
   getFiles(folderId?: number): Observable<FileItem[]> {
     const key = folderId != null ? String(folderId) : 'root';
     const url = folderId != null ? `${this.api}/files?folder_id=${folderId}` : `${this.api}/files`;
-    return this.http.get<FileItem[]>(url).pipe(tap(f => this._filesCache.set(key, f)));
+    return this.http.get<FileItem[]>(url).pipe(
+      tap(f => {
+        this._filesCache.set(key, f);
+        if (folderId == null) {
+          try { localStorage.setItem(StorageService.LS_FILES, JSON.stringify(f)); } catch {}
+        }
+      })
+    );
   }
 
   getTrash(): Observable<FileItem[]> {
@@ -202,7 +221,24 @@ export class StorageService {
   getFolders(parentId?: number): Observable<FolderItem[]> {
     const key = parentId != null ? String(parentId) : 'root';
     const url = parentId != null ? `${this.api}/folders?parent_id=${parentId}` : `${this.api}/folders`;
-    return this.http.get<FolderItem[]>(url).pipe(tap(f => this._foldersCache.set(key, f)));
+    return this.http.get<FolderItem[]>(url).pipe(
+      tap(f => {
+        this._foldersCache.set(key, f);
+        if (parentId == null) {
+          try { localStorage.setItem(StorageService.LS_FOLDERS, JSON.stringify(f)); } catch {}
+        }
+      })
+    );
+  }
+
+  clearLocalCache(): void {
+    localStorage.removeItem(StorageService.LS_FILES);
+    localStorage.removeItem(StorageService.LS_FOLDERS);
+    this._filesCache.clear();
+    this._foldersCache.clear();
+    this._trashCache = null;
+    this._blobUrlCache.clear();
+    this._blobUrlFailed.clear();
   }
 
   createFolder(nom: string, parentId?: number): Observable<FolderItem> {
