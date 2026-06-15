@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, ChangeDetectorRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { StorageService, FileItem, FolderItem } from '../../services/storage.service';
+import { StorageService, FileItem, FolderItem, UploadProgress } from '../../services/storage.service';
 import { AuthService } from '../../services/auth.service';
 import { timeout } from 'rxjs/operators';
 
@@ -29,6 +29,12 @@ export class Drive implements OnInit, OnDestroy {
   uploading = false;
   uploadCount = 0;
   uploadDone = 0;
+  totalUploadBytes = 0;
+  loadedUploadBytes = 0;
+  get uploadPct(): number {
+    if (!this.totalUploadBytes) return 0;
+    return Math.min(100, Math.round(this.loadedUploadBytes / this.totalUploadBytes * 100));
+  }
 
   // Nouveau dossier
   newFolderName = '';
@@ -159,9 +165,12 @@ export class Drive implements OnInit, OnDestroy {
     this.uploading = true;
     this.uploadCount = files.length;
     this.uploadDone = 0;
+    this.totalUploadBytes = files.reduce((s, f) => s + f.size, 0);
+    this.loadedUploadBytes = 0;
 
-    const progressSub = this.storage.uploadDone$.subscribe(({ done }) => {
-      this.uploadDone = done;
+    const progressSub = this.storage.uploadDone$.subscribe((p: UploadProgress) => {
+      this.uploadDone = p.done;
+      this.loadedUploadBytes = p.loadedBytes;
       this.cdr.detectChanges();
     });
 
@@ -171,6 +180,8 @@ export class Drive implements OnInit, OnDestroy {
         this.uploading = false;
         this.uploadCount = 0;
         this.uploadDone = 0;
+        this.totalUploadBytes = 0;
+        this.loadedUploadBytes = 0;
         this.files = [...this.files, ...newFiles];
         this.storage.invalidateFilesCache(this.currentFolderId);
         this.loadThumbnails(newFiles);
@@ -187,6 +198,8 @@ export class Drive implements OnInit, OnDestroy {
         this.uploading = false;
         this.uploadCount = 0;
         this.uploadDone = 0;
+        this.totalUploadBytes = 0;
+        this.loadedUploadBytes = 0;
         const detail = err?.error?.detail || 'Erreur lors de l\'upload';
         this.showToast(detail, 'error');
       }

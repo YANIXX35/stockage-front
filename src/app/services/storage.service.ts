@@ -23,6 +23,13 @@ export interface FolderItem {
   created_at: string;
 }
 
+export interface UploadProgress {
+  done: number;        // fichiers terminés
+  total: number;       // total fichiers
+  loadedBytes: number; // octets transférés
+  totalBytes: number;  // octets total
+}
+
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   private http = inject(HttpClient);
@@ -38,7 +45,7 @@ export class StorageService {
   private _blobUrlCache = new Map<number, string>();
   private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
-  readonly uploadDone$ = new Subject<{ done: number; total: number }>();
+  readonly uploadDone$ = new Subject<UploadProgress>();
 
   constructor() {
     try {
@@ -96,21 +103,37 @@ export class StorageService {
     );
   }
 
-  private async uploadToCloudinary(
+  private uploadToCloudinaryWithProgress(
     file: File,
-    config: { cloud_name: string; upload_preset: string }
+    config: { cloud_name: string; upload_preset: string },
+    onProgress: (loaded: number) => void
   ): Promise<{ secure_url: string; public_id: string }> {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', config.upload_preset);
-    fd.append('folder', 'storage');
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${config.cloud_name}/auto/upload`,
-      { method: 'POST', body: fd }
-    );
-    if (!res.ok) throw new Error('Cloudinary upload failed');
-    const data = await res.json();
-    return { secure_url: data.secure_url, public_id: data.public_id };
+    return new Promise((resolve, reject) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', config.upload_preset);
+      fd.append('folder', 'storage');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${config.cloud_name}/auto/upload`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded); };
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve({ secure_url: data.secure_url, public_id: data.public_id });
+          } catch {
+            reject(new Error('Réponse Cloudinary invalide'));
+          }
+        } else {
+          reject(new Error(`Cloudinary ${xhr.status}`));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Erreur réseau'));
+      xhr.ontimeout = () => reject(new Error('Upload timeout'));
+      xhr.timeout = 5 * 60 * 1000; // 5 min max par fichier
+      xhr.send(fd);
+    });
   }
 
   private registerFile(data: {
@@ -127,10 +150,11 @@ export class StorageService {
   private async _uploadOne(
     file: File,
     config: { cloud_name: string; upload_preset: string },
-    folderId?: number
+    folderId: number | undefined,
+    onProgress: (loaded: number) => void
   ): Promise<FileItem | null> {
     try {
-      const { secure_url, public_id } = await this.uploadToCloudinary(file, config);
+      const { secure_url, public_id } = await this.uploadToCloudinaryWithProgress(file, config, onProgress);
       return await firstValueFrom(this.registerFile({
         nom_original: file.name,
         type_mime: file.type || 'application/octet-stream',
@@ -149,24 +173,39 @@ export class StorageService {
     config: { cloud_name: string; upload_preset: string },
     folderId?: number
   ): Promise<FileItem[]> {
-    let done = 0;
+    const CONCURRENCY = 4;
     const total = files.length;
-    const BATCH = 3;
-    const allResults: FileItem[] = [];
+    const totalBytes = files.reduce((s, f) => s + f.size, 0);
+    const bytesLoaded = new Array<number>(total).fill(0);
+    const results = new Array<FileItem | null>(total).fill(null);
+    let done = 0;
 
-    for (let i = 0; i < files.length; i += BATCH) {
-      const batch = files.slice(i, i + BATCH);
-      const batchResults = await Promise.all(
-        batch.map(async file => {
-          const result = await this._uploadOne(file, config, folderId);
-          done++;
-          this.uploadDone$.next({ done, total });
-          return result;
-        })
-      );
-      allResults.push(...batchResults.filter((f): f is FileItem => f !== null));
-    }
-    return allResults;
+    const emitProgress = () => {
+      this.uploadDone$.next({
+        done,
+        total,
+        loadedBytes: bytesLoaded.reduce((s, v) => s + v, 0),
+        totalBytes
+      });
+    };
+
+    // Pool de workers : chaque slot prend la prochaine tâche disponible dès qu'il se libère
+    let idx = 0;
+    const worker = async () => {
+      while (idx < files.length) {
+        const i = idx++;
+        results[i] = await this._uploadOne(files[i], config, folderId, loaded => {
+          bytesLoaded[i] = loaded;
+          emitProgress();
+        });
+        bytesLoaded[i] = files[i].size;
+        done++;
+        emitProgress();
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
+    return results.filter((f): f is FileItem => f !== null);
   }
 
   uploadFiles(files: File[], folderId?: number): Observable<FileItem[]> {
