@@ -1028,6 +1028,23 @@ input, button { font-family: inherit; }
   .share-loading { color: var(--text-muted); }
 }
 
+/* ── BARRE DE NAVIGATION ─────────────────────────────────── */
+@keyframes nav-progress {
+  0%   { width: 0%; opacity: 1; }
+  70%  { width: 85%; opacity: 1; }
+  100% { width: 95%; opacity: 0.6; }
+}
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  animation: nav-progress 1.2s ease-out forwards;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 /* ── TOAST NOTIFICATIONS ─────────────────────────────────── */
 @keyframes toast-in {
   from { transform: translateX(calc(100% + 1.5rem)); opacity: 0; }

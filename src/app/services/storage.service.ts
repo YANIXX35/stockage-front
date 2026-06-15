@@ -46,6 +46,7 @@ export class StorageService {
   private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
   readonly uploadDone$ = new Subject<UploadProgress>();
+  readonly uploadFile$ = new Subject<FileItem>(); // émet chaque fichier dès que son upload est terminé
 
   constructor() {
     try {
@@ -201,6 +202,7 @@ export class StorageService {
         bytesLoaded[i] = files[i].size;
         done++;
         emitProgress();
+        if (results[i]) this.uploadFile$.next(results[i]!);
       }
     };
 

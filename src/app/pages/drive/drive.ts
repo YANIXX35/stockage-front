@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, ChangeDete
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StorageService, FileItem, FolderItem, UploadProgress } from '../../services/storage.service';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { timeout } from 'rxjs/operators';
 
@@ -174,19 +175,25 @@ export class Drive implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
+    // Chaque fichier apparaît dans la liste dès que son upload est terminé
+    const fileSub: Subscription = this.storage.uploadFile$.subscribe(file => {
+      this.files = [...this.files, file];
+      this.loadThumbnails([file]);
+      this.cdr.detectChanges();
+    });
+
     this.storage.uploadFiles(files, this.currentFolderId).subscribe({
-      next: (newFiles) => {
+      next: () => {
         progressSub.unsubscribe();
+        fileSub.unsubscribe();
         this.uploading = false;
         this.uploadCount = 0;
         this.uploadDone = 0;
         this.totalUploadBytes = 0;
         this.loadedUploadBytes = 0;
-        this.files = [...this.files, ...newFiles];
         this.storage.invalidateFilesCache(this.currentFolderId);
-        this.loadThumbnails(newFiles);
         this.auth.loadMe().subscribe();
-        const n = newFiles.length;
+        const n = this.uploadDone;
         const failed = files.length - n;
         const msg = n > 0
           ? `${n} fichier${n > 1 ? 's uploadés' : ' uploadé'} avec succès${failed > 0 ? ` (${failed} échoué${failed > 1 ? 's' : ''})` : ''}`
@@ -195,6 +202,7 @@ export class Drive implements OnInit, OnDestroy {
       },
       error: (err) => {
         progressSub.unsubscribe();
+        fileSub.unsubscribe();
         this.uploading = false;
         this.uploadCount = 0;
         this.uploadDone = 0;

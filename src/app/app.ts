@@ -1,15 +1,25 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router, NavigationStart, NavigationEnd, NavigationError, NavigationCancel } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { StorageService } from './services/storage.service';
 import { SyncService } from './services/sync.service';
 import { environment } from '../environments/environment';
 import { catchError, of } from 'rxjs';
 
-@Component({ selector: 'app-root', standalone: false, template: '<router-outlet></router-outlet>' })
+@Component({
+  selector: 'app-root',
+  standalone: false,
+  template: `
+    @if (navigating) { <div class="nav-bar"></div> }
+    <router-outlet></router-outlet>
+  `
+})
 export class App implements OnInit, OnDestroy {
+  navigating = false;
   private auth    = inject(AuthService);
   private http    = inject(HttpClient);
+  private router  = inject(Router);
   private storage = inject(StorageService);
   private sync    = inject(SyncService);
 
@@ -31,6 +41,13 @@ export class App implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    // Barre de progression navigation
+    this.router.events.subscribe(e => {
+      if (e instanceof NavigationStart)  this.navigating = true;
+      if (e instanceof NavigationEnd || e instanceof NavigationError || e instanceof NavigationCancel)
+        this.navigating = false;
+    });
+
     // Réveil du backend Render
     const baseUrl = environment.apiUrl.replace(/\/api$/, '');
     this.http.get(`${baseUrl}/health`).pipe(catchError(() => of(null))).subscribe();
