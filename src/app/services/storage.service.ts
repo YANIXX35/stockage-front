@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of, from, timer, Subject, firstValueFrom, defer } from 'rxjs';
+import { Observable, of, from, timer, Subject, BehaviorSubject, firstValueFrom, defer } from 'rxjs';
 import { tap, map, retry, catchError, switchMap, finalize } from 'rxjs/operators';
 import { SyncService } from './sync.service';
 import { environment } from '../../environments/environment';
@@ -46,14 +46,30 @@ export class StorageService {
   private _blobUrlFailed = new Set<number>();
   private _cloudinaryConfig: { cloud_name: string; upload_preset: string } | null = null;
   readonly uploadDone$ = new Subject<UploadProgress>();
-  readonly uploadFile$ = new Subject<FileItem>(); // émet chaque fichier dès que son upload est terminé
+  readonly uploadFile$ = new Subject<FileItem>();
+
+  // ── État réactif global — toutes les sections s'y abonnent ──────────
+  private _files$   = new BehaviorSubject<FileItem[]   | null>(null);
+  private _folders$ = new BehaviorSubject<FolderItem[] | null>(null);
+  private _trash$   = new BehaviorSubject<FileItem[]   | null>(null);
+  readonly files$   = this._files$.asObservable();
+  readonly folders$ = this._folders$.asObservable();
+  readonly trash$   = this._trash$.asObservable();
 
   constructor() {
     try {
       const f = localStorage.getItem(StorageService.LS_FILES);
-      if (f) this._filesCache.set('root', JSON.parse(f));
+      if (f) {
+        const files = JSON.parse(f) as FileItem[];
+        this._filesCache.set('root', files);
+        this._files$.next(files); // disponible immédiatement avant tout appel réseau
+      }
       const d = localStorage.getItem(StorageService.LS_FOLDERS);
-      if (d) this._foldersCache.set('root', JSON.parse(d));
+      if (d) {
+        const folders = JSON.parse(d) as FolderItem[];
+        this._foldersCache.set('root', folders);
+        this._folders$.next(folders);
+      }
     } catch { /* localStorage inaccessible ou données corrompues */ }
   }
 
@@ -202,7 +218,14 @@ export class StorageService {
         bytesLoaded[i] = files[i].size;
         done++;
         emitProgress();
-        if (results[i]) this.uploadFile$.next(results[i]!);
+        if (results[i]) {
+          this.uploadFile$.next(results[i]!);
+          // Met à jour l'état global pour que Gallery/Dashboard voient le nouveau fichier
+          const current = this._files$.getValue();
+          if (current !== null && results[i]!.folder_id == null) {
+            this._files$.next([...current, results[i]!]);
+          }
+        }
       }
     };
 
@@ -223,6 +246,7 @@ export class StorageService {
       tap(f => {
         this._filesCache.set(key, f);
         if (folderId == null) {
+          this._files$.next(f); // diffuse à tous les abonnés (Dashboard, Gallery, Drive)
           try { localStorage.setItem(StorageService.LS_FILES, JSON.stringify(f)); } catch {}
         }
       }),
@@ -231,7 +255,9 @@ export class StorageService {
   }
 
   getTrash(): Observable<FileItem[]> {
-    return this.http.get<FileItem[]>(`${this.api}/files/trash`).pipe(tap(f => this._trashCache = f));
+    return this.http.get<FileItem[]>(`${this.api}/files/trash`).pipe(
+      tap(f => { this._trashCache = f; this._trash$.next(f); })
+    );
   }
 
   downloadUrl(fileId: number): string {
@@ -269,6 +295,7 @@ export class StorageService {
       tap(f => {
         this._foldersCache.set(key, f);
         if (parentId == null) {
+          this._folders$.next(f); // diffuse à Dashboard et Drive
           try { localStorage.setItem(StorageService.LS_FOLDERS, JSON.stringify(f)); } catch {}
         }
       }),

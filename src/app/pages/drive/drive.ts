@@ -54,11 +54,29 @@ export class Drive implements OnInit, OnDestroy {
   private toastTimer: any;
 
   readonly skeletonRows = [1,2,3,4,5,6,7,8];
-
-  // Confirmation suppression (remplace confirm() natif)
   pendingDelete: { type: 'file' | 'folder'; id: number; label: string } | null = null;
 
+  private _filesSub?: Subscription;
+  private _foldersSub?: Subscription;
+
   ngOnInit(): void {
+    // Abonnement à l'état global pour le dossier racine → affichage immédiat
+    this._filesSub = this.storage.files$.subscribe(files => {
+      if (files === null || this.currentFolderId != null) return;
+      this.files   = files;
+      this.loading = false;
+      this.loadError = false;
+      this.slowLoading = false;
+      clearTimeout(this.slowTimer);
+      this.loadThumbnails(files);
+      this.cdr.detectChanges();
+    });
+    this._foldersSub = this.storage.folders$.subscribe(folders => {
+      if (folders === null || this.currentFolderId != null) return;
+      this.folders = folders;
+      this.cdr.detectChanges();
+    });
+
     this.route.queryParams.subscribe(p => {
       this.currentFolderId = p['folder'] ? +p['folder'] : undefined;
       this.load();
@@ -66,6 +84,8 @@ export class Drive implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this._filesSub?.unsubscribe();
+    this._foldersSub?.unsubscribe();
     clearTimeout(this.toastTimer);
     clearTimeout(this.slowTimer);
   }

@@ -1,27 +1,63 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { StorageService, FileItem } from '../../services/storage.service';
-import { timeout } from 'rxjs/operators';
 
 @Component({ selector: 'app-dashboard', standalone: false, templateUrl: './dashboard.html', styleUrl: './dashboard.scss' })
 export class Dashboard implements OnInit, OnDestroy {
-  auth = inject(AuthService);
+  auth    = inject(AuthService);
   storage = inject(StorageService);
   private sanitizer = inject(DomSanitizer);
 
   recentFiles: FileItem[] = [];
-  totalFiles = 0;
+  totalFiles   = 0;
   totalFolders = 0;
-  loading = true;
-  loadError = false;
-  slowLoading = false;
+  loading      = true;
+  loadError    = false;
+  slowLoading  = false;
   readonly skeletonItems = [1, 2, 3, 4, 5, 6];
-  private slowTimer: any;
   blobUrls = new Map<number, SafeUrl>();
 
-  ngOnInit(): void { this.load(); }
-  ngOnDestroy(): void { clearTimeout(this.slowTimer); }
+  private _subs: Subscription[] = [];
+  private _slowTimer: any;
+
+  ngOnInit(): void {
+    // Abonnement à l'état global — s'affiche instantanément si les données sont déjà là
+    this._subs.push(
+      this.storage.files$.subscribe(files => {
+        if (files === null) return;
+        this.totalFiles  = files.length;
+        this.recentFiles = files.slice(-6).reverse();
+        this.loading     = false;
+        this.loadError   = false;
+        this.slowLoading = false;
+        clearTimeout(this._slowTimer);
+        this._loadThumbnails(this.recentFiles);
+      }),
+      this.storage.folders$.subscribe(folders => {
+        if (folders !== null) this.totalFolders = folders.length;
+      })
+    );
+
+    // Affiche le skeleton timer seulement si aucune donnée en cache
+    if (this.storage.getCachedFiles() === null) {
+      this._slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this._subs.forEach(s => s.unsubscribe());
+    clearTimeout(this._slowTimer);
+  }
+
+  retry(): void {
+    this.loading     = true;
+    this.loadError   = false;
+    this.slowLoading = false;
+    this.storage.getFiles().subscribe({ error: () => { this.loading = false; this.loadError = true; } });
+    this.storage.getFolders().subscribe();
+  }
 
   getThumbUrl(f: FileItem): string {
     if (!f.cloudinary_url) return '';
@@ -31,60 +67,13 @@ export class Dashboard implements OnInit, OnDestroy {
     return f.cloudinary_url.replace('/image/upload/', '/image/upload/w_300,h_300,c_fill/');
   }
 
-  private loadThumbnails(files: FileItem[]): void {
+  private _loadThumbnails(files: FileItem[]): void {
     files.filter(f => (this.storage.isImage(f.type_mime) || this.storage.isVideo(f.type_mime)) && !f.cloudinary_url).forEach(f => {
       if (!this.blobUrls.has(f.id)) {
         this.storage.getBlobUrl(f.id).subscribe(url => {
           if (url) this.blobUrls.set(f.id, this.sanitizer.bypassSecurityTrustUrl(url));
         });
       }
-    });
-  }
-
-  load(): void {
-    const cachedFiles = this.storage.getCachedFiles();
-    const cachedFolders = this.storage.getCachedFolders();
-    const hadCache = cachedFiles !== null;
-
-    if (hadCache) {
-      this.totalFiles = cachedFiles!.length;
-      this.recentFiles = cachedFiles!.slice(-6).reverse();
-      this.loading = false;
-      this.loadError = false;
-      this.slowLoading = false;
-      clearTimeout(this.slowTimer);
-      this.loadThumbnails(this.recentFiles);
-    } else {
-      this.loading = true;
-      this.loadError = false;
-      this.slowLoading = false;
-      clearTimeout(this.slowTimer);
-      this.slowTimer = setTimeout(() => this.slowLoading = true, 15000);
-    }
-    if (cachedFolders !== null) this.totalFolders = cachedFolders.length;
-
-    this.auth.loadMe().subscribe();
-    this.storage.getFiles().pipe(timeout(60000)).subscribe({
-      next: f => {
-        this.totalFiles = f.length;
-        this.recentFiles = f.slice(-6).reverse();
-        this.loading = false;
-        this.slowLoading = false;
-        clearTimeout(this.slowTimer);
-        this.loadThumbnails(this.recentFiles);
-      },
-      error: () => {
-        if (!hadCache) {
-          this.loading = false;
-          this.loadError = true;
-          this.slowLoading = false;
-          clearTimeout(this.slowTimer);
-        }
-      }
-    });
-    this.storage.getFolders().pipe(timeout(60000)).subscribe({
-      next: f => this.totalFolders = f.length,
-      error: () => {}
     });
   }
 }

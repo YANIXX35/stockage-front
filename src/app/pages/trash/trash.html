@@ -7,7 +7,7 @@
       @if ((loading && slowLoading) || loadError) {
         <div class="load-error">
           <p>{{ loadError ? 'Serveur injoignable.' : 'Le serveur met du temps à répondre...' }}</p>
-          <button class="btn-retry" (click)="load()">Réessayer</button>
+          <button class="btn-retry" (click)="retry()">Réessayer</button>
         </div>
       }
       @if (!loading && !loadError && files.length === 0) {

@@ -85,7 +85,7 @@
         @if (slowLoading) {
           <p class="slow-hint">
             Serveur en cours de démarrage...
-            <button class="btn-link" (click)="load()">Réessayer</button>
+            <button class="btn-link" (click)="retry()">Réessayer</button>
           </p>
         }
       }
@@ -94,7 +94,7 @@
       @if (loadError) {
         <div class="load-error">
           <p>Serveur injoignable.</p>
-          <button class="btn-retry" (click)="load()">Réessayer</button>
+          <button class="btn-retry" (click)="retry()">Réessayer</button>
         </div>
       }
 
