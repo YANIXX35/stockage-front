@@ -109,7 +109,31 @@ export class Drive implements OnInit, OnDestroy {
   }
 
   load(): void {
-    const cachedFiles = this.storage.getCachedFiles(this.currentFolderId);
+    // Dossier racine : les BehaviorSubject files$/folders$ gèrent tout (app.ts lance _refreshAll)
+    // On lit juste le cache local pour l'affichage immédiat — pas de 2ème appel API
+    if (this.currentFolderId == null) {
+      const cached = this.storage.getCachedFiles();
+      if (cached !== null) {
+        this.files = cached;
+        this.loading = false;
+        this.loadError = false;
+        this.slowLoading = false;
+        clearTimeout(this.slowTimer);
+        this.loadThumbnails(cached);
+      } else {
+        this.loading = true;
+        this.loadError = false;
+        this.slowLoading = false;
+        clearTimeout(this.slowTimer);
+        this.slowTimer = setTimeout(() => this.slowLoading = true, 10000);
+      }
+      const cachedFolders = this.storage.getCachedFolders();
+      if (cachedFolders !== null) this.folders = cachedFolders;
+      return; // files$/folders$ subscriptions (ngOnInit) reçoivent la mise à jour réseau
+    }
+
+    // Sous-dossier : fetch dédié
+    const cachedFiles   = this.storage.getCachedFiles(this.currentFolderId);
     const cachedFolders = this.storage.getCachedFolders(this.currentFolderId);
     const hadCache = cachedFiles !== null;
 
